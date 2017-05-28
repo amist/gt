@@ -1,11 +1,11 @@
-from .population import *
+from gt.population import *
 import os
 import configparser
 
 class Runner(object):
-    def __init__(self, individual):
+    def __init__(self, individual, config_file='run.config'):
         config = configparser.ConfigParser()
-        config.read(os.path.join(os.getcwd(), 'run.config'))
+        config.read(os.path.join(os.getcwd(), config_file))
         
         self.debug = config.getboolean('runner', 'debug')
         self.generations_number = config.getint('runner', 'generations_number')

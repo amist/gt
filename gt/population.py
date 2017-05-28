@@ -20,8 +20,13 @@ class SimplePopulation(object):
             child = parent1.get_child(parent2)
             self.population.append(child)
 
-        map(lambda x: x.mutate(), self.population)
-        self.population.sort(key=lambda x: x.get_fitness(), reverse=True)
+        min_val = min([min([x for x in i.chromosome]) for i in self.population])
+        max_val = max([max([x for x in i.chromosome]) for i in self.population])
+        scope_data = {'min_val': min_val, 'max_val': max_val}
+        print(scope_data)
+        list(map(lambda x: x.mutate(scope_data=scope_data), self.population))
+        #[x.mutate() for x in self.population]
+        self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
         self.population = self.population[:self.size]
 
 

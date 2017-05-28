@@ -1,9 +1,9 @@
 import time
-from pythongen.runner import Runner
-from pythongen.examples.sphere import *
+from gt.runner import Runner
+from gt.examples.sphere import *
 
 if __name__ == '__main__':
-    runner = Runner(individual=Sphere)
+    runner = Runner(individual=Sphere, config_file='run.config')
 
     start_time = time.time()
     solution = runner.get_solution()
