@@ -20,8 +20,10 @@ class SimplePopulation(object):
             child = parent1.get_child(parent2)
             self.population.append(child)
 
-        min_val = min([min([x for x in i.chromosome]) for i in self.population])
-        max_val = max([max([x for x in i.chromosome]) for i in self.population])
+        #min_val = min([min([x for x in i.chromosome]) for i in self.population])
+        #max_val = max([max([x for x in i.chromosome]) for i in self.population])
+        min_val = 1
+        max_val = 9
         scope_data = {'min_val': min_val, 'max_val': max_val}
         print(scope_data)
         list(map(lambda x: x.mutate(scope_data=scope_data), self.population))
