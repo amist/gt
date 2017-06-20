@@ -2,7 +2,8 @@ import os
 import random
 import configparser
 
-class Kakuro(object):
+
+class KakuroTypes(object):
     config = configparser.ConfigParser()
     config.read(os.path.join(os.getcwd(), 'test.config'))
     debug = config.getboolean('runner', 'debug')
@@ -20,46 +21,79 @@ class Kakuro(object):
                 [[None, 6, ], [0], [0], [0], [None, None, ], [None, 3, ], [0], [0], ],
             ]
         self.fitness = None
+        self.type_fitness = None
+        self.lists = None
+        self.type = random.choice(['unique', 'sum'])
 
+    def create_lists(self):
+        if self.lists is not None:
+            return
+
+        lists = []
+        new_list = []
+        for row in self.chromosome:
+            for cell in row:
+                if len(cell) == 2 and cell[1] is not None:
+                    lists.append(new_list)
+                    new_list = [cell[1]]
+                elif len(cell) == 1:
+                    new_list.append(cell[0])
+
+        for row in zip(*self.chromosome):
+            for cell in row:
+                if len(cell) == 2 and cell[0] is not None:
+                    lists.append(new_list)
+                    new_list = [cell[0]]
+                elif len(cell) == 1:
+                    new_list.append(cell[0])
+        lists.append(new_list)
+        self.lists = lists[1:]
+
+    def get_unique_fitness(self):
+        fitness = 0
+        for l in self.lists:
+            vals = l[1:]
+            fitness += len(vals) - len(set(vals))
+        return fitness
+
+    def get_sum_fitness(self):
+        fitness = 0
+        for l in self.lists:
+            total = l[0]
+            vals = l[1:]
+            fitness += abs(total - sum(vals))
+        return fitness
+
+    def get_type_fitness(self):
+        if self.type_fitness is not None:
+            return self.type_fitness
+
+        self.create_lists()
+
+        if self.type == 'unique':
+            self.type_fitness = self.get_unique_fitness()
+        if self.type == 'sum':
+            self.type_fitness = self.get_sum_fitness()
+        return self.type_fitness
 
     def get_fitness(self):
-        if self.fitness is None:
-            self.fitness = 0
-            lists = []
-            new_list = []
-            for row in self.chromosome:
-                for cell in row:
-                    if len(cell) == 2 and cell[1] is not None:
-                        lists.append(new_list)
-                        new_list = [cell[1]]
-                    elif len(cell) == 1:
-                        new_list.append(cell[0])
+        if self.fitness is not None:
+            return self.fitness
 
-            for row in zip(*self.chromosome):
-                for cell in row:
-                    if len(cell) == 2 and cell[0] is not None:
-                        lists.append(new_list)
-                        new_list = [cell[0]]
-                    elif len(cell) == 1:
-                        new_list.append(cell[0])
-            lists.append(new_list)
-            lists = lists[1:]
-            #print(lists)
-            for l in lists:
-                total = l[0]
-                vals = l[1:]
-                self.fitness += abs(total - sum(vals))
-                self.fitness += 10 * (len(vals) - len(set(vals)))
+        self.fitness = 0
+        self.create_lists()
+
+        self.fitness += 10 * self.get_unique_fitness()
+        self.fitness += self.get_sum_fitness()
+
         return self.fitness
 
-
     def get_child(self, other):
-        child = Kakuro()
+        child = KakuroTypes()
         partition = random.randint(0, len(self.chromosome)-1)
         child.chromosome = self.chromosome
         child.chromosome[partition:] = other.chromosome[partition:]
         return child
-
 
     def mutate(self, scope_data=None):
         if random.randrange(self.mutation_prob) == 0:
@@ -68,7 +102,6 @@ class Kakuro(object):
             j = random.randrange(0, len(self.chromosome))
             if len(self.chromosome[i][j]) == 1:
                 self.chromosome[i][j] = [random.randint(1, 9)]
-
 
     def print(self):
         i = 0

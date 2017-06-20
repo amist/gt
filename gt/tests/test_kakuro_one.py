@@ -6,7 +6,7 @@ if __name__ == '__main__':
     k = Kakuro()
     k.print()
     #exit()
-    runner = Runner(individual=Kakuro, config_file='run.config')
+    runner = Runner(config_file='run_kakuro.config')
 
     start_time = time.time()
     solution = runner.get_solution()

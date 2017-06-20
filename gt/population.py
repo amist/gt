@@ -3,34 +3,87 @@ import sys
 import configparser
 import random
 
-class SimplePopulation(object):
-    def __init__(self, individual):
-        config = configparser.ConfigParser()
-        config.read(os.path.join(os.getcwd(), 'run.config'))
-        
-        self.size = config.getint('population', 'size')
-        self.expansion_factor = config.getint('population', 'expansion_factor')
-        self.population = [individual() for _ in range(self.size)]
 
-
-    def process_generation(self):
+class BasePopulation(object):
+    def expand_population(self):
         for _ in range(self.expansion_factor * len(self.population)):
             parent1 = random.choice(self.population)
             parent2 = random.choice(self.population)
             child = parent1.get_child(parent2)
             self.population.append(child)
 
-        #min_val = min([min([x for x in i.chromosome]) for i in self.population])
-        #max_val = max([max([x for x in i.chromosome]) for i in self.population])
+
+class SimplePopulation(BasePopulation):
+    def __init__(self, individual, config_file='test.config'):
+        config = configparser.ConfigParser()
+        config.read(os.path.join(os.getcwd(), config_file))
+        
+        self.size = config.getint('population', 'size')
+        self.expansion_factor = config.getint('population', 'expansion_factor')
+        self.population = [individual() for _ in range(self.size)]
+
+    def process_generation(self):
+        self.expand_population()
+
+        # min_val = min([min([x for x in i.chromosome]) for i in self.population])
+        # max_val = max([max([x for x in i.chromosome]) for i in self.population])
         min_val = 1
         max_val = 9
         scope_data = {'min_val': min_val, 'max_val': max_val}
         print(scope_data)
         list(map(lambda x: x.mutate(scope_data=scope_data), self.population))
-        #[x.mutate() for x in self.population]
+        # [x.mutate() for x in self.population]
         self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
         self.population = self.population[:self.size]
 
+    def get_best(self):
+        return self.population[0]
+
+
+class TypesPopulation(BasePopulation):
+    def __init__(self, individual, config_file='test.config'):
+        config = configparser.ConfigParser()
+        config.read(os.path.join(os.getcwd(), config_file))
+
+        self.size = config.getint('population', 'size')
+        self.expansion_factor = config.getint('population', 'expansion_factor')
+        self.population = [individual() for _ in range(self.size)]
+
+    def process_generation(self):
+        try:
+            # divide the population into types
+            types_populations = {}
+            for individual in self.population:
+                if individual.type not in types_populations:
+                    types_populations[individual.type] = []
+                types_populations[individual.type].append(individual)
+
+            # assuming there are two types
+            types = list(types_populations.keys())
+            for _ in range(self.expansion_factor * len(self.population)):
+                parent1 = random.choice(types_populations[types[0]])
+                parent2 = random.choice(types_populations[types[1]])
+                child = parent1.get_child(parent2)
+                child.mutate()
+                types_populations[child.type].append(child)
+
+        except AttributeError:
+            # no types - handle as SimplePopulation
+            print('AttributeError')
+            self.expand_population()
+            list(map(lambda x: x.mutate(), self.population))
+            self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
+            self.population = self.population[:self.size]
+            return
+
+        self.population = []
+        for population_type in types_populations:
+            population = types_populations[population_type]
+            # list(map(lambda x: x.mutate(), population))
+            population.sort(key=lambda x: x.get_type_fitness(), reverse=False)
+            population = population[:self.size]
+            self.population += population
+        self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
 
     def get_best(self):
         return self.population[0]
