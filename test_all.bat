@@ -1,0 +1,1 @@
+python -m gt.tests.test_queens

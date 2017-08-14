@@ -14,23 +14,24 @@ class BasePopulation(object):
 
 
 class SimplePopulation(BasePopulation):
-    def __init__(self, individual, config_file='test.config'):
+    def __init__(self, individual, config_file):
         config = configparser.ConfigParser()
-        config.read(os.path.join(os.getcwd(), config_file))
+        config.read(config_file)
         
         self.size = config.getint('population', 'size')
         self.expansion_factor = config.getint('population', 'expansion_factor')
-        self.population = [individual() for _ in range(self.size)]
+        self.population = [individual(config_file=config_file) for _ in range(self.size)]
 
     def process_generation(self):
         self.expand_population()
 
         # min_val = min([min([x for x in i.chromosome]) for i in self.population])
         # max_val = max([max([x for x in i.chromosome]) for i in self.population])
-        min_val = 1
-        max_val = 9
-        scope_data = {'min_val': min_val, 'max_val': max_val}
-        print(scope_data)
+        scope_data = None
+        # min_val = 1
+        # max_val = 9
+        # scope_data = {'min_val': min_val, 'max_val': max_val}
+        # print(scope_data)
         list(map(lambda x: x.mutate(scope_data=scope_data), self.population))
         # [x.mutate() for x in self.population]
         self.population.sort(key=lambda x: x.get_fitness(), reverse=False)

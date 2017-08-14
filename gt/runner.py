@@ -6,7 +6,7 @@ import configparser
 class Runner(object):
     def __init__(self, config_file):
         config = configparser.ConfigParser()
-        config.read(os.path.join(os.getcwd(), config_file))
+        config.read(config_file)
         
         self.debug = config.getboolean('runner', 'debug')
         self.generations_number = config.getint('runner', 'generations_number')
