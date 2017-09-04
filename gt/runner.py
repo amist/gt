@@ -27,4 +27,5 @@ class Runner(object):
             self.population.process_generation()
             if self.debug:
                 print('Generation: {:2}: Best Fitness: {:3}'.format(i, self.population.get_best().get_fitness()))
+                self.population.get_best().print()
         return self.population.get_best()

@@ -11,6 +11,12 @@ class BasePopulation(object):
             parent2 = random.choice(self.population)
             child = parent1.get_child(parent2)
             self.population.append(child)
+            
+            
+    def show_diversity_info(self):
+        best_chromosome = self.population[0].chromosome
+        worst_chromosome = self.population[-1].chromosome
+        
 
 
 class SimplePopulation(BasePopulation):
