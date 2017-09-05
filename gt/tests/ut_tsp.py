@@ -43,7 +43,35 @@ def test_crossover():
                 expected_chromosome = [(0,0),(3,1),(2,2),(1,3)]
             
             comp(child.chromosome, expected_chromosome)
+            
+            
+def test_normalize():
+    config_file = os.path.join(os.getcwd(), 'tsp.config')
+    k = TSP(config_file=config_file)
+    k.chromosome_type = 'b'
+    k.chromosome = [(1,1),(0,0)]
+    k.size = len(k.chromosome)
+    print('normalize', k.chromosome, end=' ')
+    ret = k.normalize_chromosome(k.chromosome)
+    print('to', k.chromosome, end=' ')
+    comp(ret, [(0,0),(1,1)])
+    
+    k.chromosome = [(0,1),(1,2),(2,0)]
+    k.size = len(k.chromosome)
+    print('normalize', k.chromosome, end=' ')
+    ret = k.normalize_chromosome(k.chromosome)
+    print('to', k.chromosome, end=' ')
+    comp(ret, [(0,0),(1,1),(2,2)])
+    
+    k.chromosome = [(0,1),(2,0),(1,2)]
+    k.size = len(k.chromosome)
+    print('normalize', k.chromosome, end=' ')
+    ret = k.normalize_chromosome(k.chromosome)
+    print('to', k.chromosome, end=' ')
+    comp(ret, [(0,0),(1,1),(2,2)])
+    
 
 if __name__ == '__main__':
     test_crossover()
+    test_normalize()
     

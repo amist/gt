@@ -60,7 +60,16 @@ class TSP(object):
         
         
     def normalize_chromosome(self, chromosome):
+        chromosome.sort(key=lambda x: x[0])
+        offset = chromosome[0][1]
+        size = len(chromosome)
+        # print()
+        # for i in range(len(chromosome)):
+            # elem = chromosome[i]
+            # print(elem[0], elem[1], '->', (elem[1]-offset+size)%size)
+        chromosome = [(city, (order-offset+size)%size) for (city, order) in chromosome]
         chromosome.sort(key=lambda x: x[1])
+        return chromosome
 
 
     def get_child(self, other):
@@ -86,7 +95,8 @@ class TSP(object):
                 existing_cities.append(gene[0])
                 existing_orders.append(order_index)
                 
-            self.normalize_chromosome(child.chromosome)
+            # self.normalize_chromosome(child.chromosome)
+            child.chromosome = self.normalize_chromosome(child.chromosome)
                 
         return child
 
