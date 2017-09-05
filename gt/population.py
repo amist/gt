@@ -42,6 +42,8 @@ class SimplePopulation(BasePopulation):
         # [x.mutate() for x in self.population]
         self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
         self.population = self.population[:self.size]
+        if self.population[0].chromosome == self.population[-1].chromosome:
+            return 'convergence'
 
     def get_best(self):
         return self.population[0]

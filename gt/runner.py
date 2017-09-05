@@ -24,8 +24,12 @@ class Runner(object):
 
     def get_solution(self):
         for i in range(self.generations_number):
-            self.population.process_generation()
+            ret = self.population.process_generation()
             if self.debug:
                 print('Generation: {:2}: Best Fitness: {:3}'.format(i, self.population.get_best().get_fitness()))
                 self.population.get_best().print()
+            if ret is not None:
+                if ret == 'convergence':
+                    print('Population converged completely. Finishing')
+                break
         return self.population.get_best()

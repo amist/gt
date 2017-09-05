@@ -1,7 +1,7 @@
 import time
 from gt.runner import Runner
 from gt.examples.tsp import *
-import matplotlib.pyplot as plt
+
 # plt.ion()
 
 if __name__ == '__main__':
@@ -17,6 +17,9 @@ if __name__ == '__main__':
     end_time = time.time()
     solution.print()
     print('Running time: {} seconds'.format(end_time - start_time))
-    plt.show()
+    
+    if k.graphic_output:
+        import matplotlib.pyplot as plt
+        plt.show()
     #for s in runner.population.population:
     #    print(s.get_fitness())
