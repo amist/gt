@@ -47,15 +47,20 @@ class TSP(object):
     def get_fitness(self):
         if self.fitness is None:
             dist = 0
-            prev_index = self.city_index_by_order(0)
-            for i in range(1, self.size):
+            prev_index = self.city_index_by_order(self.size-1)
+            for i in range(self.size):
                 cur_index = self.city_index_by_order(i)
                 x1, y1 = self.cities[prev_index]
                 x2, y2 = self.cities[cur_index]
                 dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
                 prev_index = cur_index
+            
             self.fitness = dist
         return self.fitness
+        
+        
+    def normalize_chromosome(self, chromosome):
+        chromosome.sort(key=lambda x: x[1])
 
 
     def get_child(self, other):
@@ -80,7 +85,8 @@ class TSP(object):
                 child.chromosome.append((gene[0], order_index))
                 existing_cities.append(gene[0])
                 existing_orders.append(order_index)
-            child.chromosome.sort(key=lambda x: x[1])
+                
+            self.normalize_chromosome(child.chromosome)
                 
         return child
 
@@ -106,6 +112,9 @@ class TSP(object):
                 x2, y2 = self.cities[self.city_index_by_order(i)]
                 # plt.arrow(x1, y1, x2-x1, y2-y1, head_width=0.05, head_length=0.1, fc='k', ec='k')
                 plt.plot([x1, x2], [y1, y2], color='k')
+            x1, y1 = self.cities[self.city_index_by_order(0)]
+            x2, y2 = self.cities[self.city_index_by_order(self.size-1)]
+            plt.plot([x1, x2], [y1, y2], color='y')
             plt.show(block=False)
             plt.pause(0.1)
         else:
