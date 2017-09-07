@@ -27,6 +27,10 @@ class SimplePopulation(BasePopulation):
         self.size = config.getint('population', 'size')
         self.expansion_factor = config.getint('population', 'expansion_factor')
         self.population = [individual(config_file=config_file) for _ in range(self.size)]
+        
+    def reset_population(self):
+        if self.population[0].chromosome_type == 'c':
+            ...
 
     def process_generation(self):
         self.expand_population()
@@ -44,6 +48,12 @@ class SimplePopulation(BasePopulation):
         self.population = self.population[:self.size]
         if self.population[0].chromosome == self.population[-1].chromosome:
             return 'convergence'
+            
+        # sort_chromosome = getattr(self.population[0], "sort_chromosome", None)
+        # if callable(sort_chromosome):
+            # order = []
+            # for individual in population:
+                # individual.sort_chromosome(order)
 
     def get_best(self):
         return self.population[0]
