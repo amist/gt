@@ -24,13 +24,24 @@ class SimplePopulation(BasePopulation):
         config = configparser.ConfigParser()
         config.read(config_file)
         
+        self.individual_class = individual
+        self.config_file = config_file
+        
         self.size = config.getint('population', 'size')
         self.expansion_factor = config.getint('population', 'expansion_factor')
         self.population = [individual(config_file=config_file) for _ in range(self.size)]
+        self.generation = 0
         
     def reset_population(self):
+        return
         if self.population[0].chromosome_type == 'c':
-            ...
+            ref_solution = self.population[0].get_solution()
+            self.population = [self.individual_class(config_file=self.config_file) for _ in range(self.size)]
+            for individual in self.population:
+                individual.reference_solution = ref_solution
+            self.population[0].chromosome = []
+            
+                
 
     def process_generation(self):
         self.expand_population()
@@ -46,8 +57,14 @@ class SimplePopulation(BasePopulation):
         # [x.mutate() for x in self.population]
         self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
         self.population = self.population[:self.size]
-        if self.population[0].chromosome == self.population[-1].chromosome:
-            return 'convergence'
+        
+        self.generation += 1
+        if self.generation % 50 == 0:
+            self.reset_population()
+        else:
+            if self.population[0].chromosome == self.population[-1].chromosome:
+                return 'convergence'
+            
             
         # sort_chromosome = getattr(self.population[0], "sort_chromosome", None)
         # if callable(sort_chromosome):
@@ -106,3 +123,16 @@ class TypesPopulation(BasePopulation):
 
     def get_best(self):
         return self.population[0]
+
+        
+class TspPopulation(SimplePopulation):
+    def __init__(self, individual, config_file='test.config'):
+        SimplePopulation.__init__(self, individual=individual, config_file=config_file)
+        
+        
+    def process_generation(self):
+        ret = SimplePopulation.process_generation(self)
+        if ret == 'convergence':
+            print('population converged. working on mutations solely')
+            for individual in self.population:
+                self.mutation_prob = 0

@@ -1,3 +1,4 @@
+import sys
 import time
 from gt.runner import Runner
 from gt.examples.tsp import *
@@ -16,9 +17,10 @@ if __name__ == '__main__':
     solution = runner.get_solution()
     end_time = time.time()
     solution.print()
-    print('Running time: {} seconds'.format(end_time - start_time))
+    print(solution.chromosome)
+    print('Running time: {} seconds'.format(end_time - start_time), file=sys.stderr)
     
-    if k.graphic_output:
+    if k.output_mode == 'graphic':
         import matplotlib.pyplot as plt
         plt.show()
     #for s in runner.population.population:
