@@ -16,6 +16,13 @@ class TSP(object):
         with open(self.data_file, 'r') as f:
             self.cities = json.loads(f.read())
             self.size = len(self.cities)
+            
+        self.dynamic_mutation = self.config.getboolean('individual', 'dynamic_mutation')
+        self.dynamic_mutation_inheritance = self.config.getboolean('individual', 'dynamic_mutation_inheritance')
+        self.dynamic_mutation_amplitude = 2
+        self.dynamic_mutation_threshold = 0.2
+        
+        self.smart_crossover = self.config.getboolean('individual', 'smart_crossover')
         
         # type a: route 2 -> 0 -> 1 is chromosome [2,0,1]
         # type b: route 2 -> 0 -> 1 is chromosome [(2,0),(0,1),(1,2)]. each tuple is (city, order) and list is sorted by order.
@@ -120,9 +127,41 @@ class TSP(object):
     def get_child(self, other):
         child = TSP(config_file=self.config_file)
         if self.chromosome_type == 'a':
-            partition = random.randint(0, len(self.chromosome)-1)
-            child.chromosome = self.chromosome[:partition]
-            child.chromosome += [x for x in other.chromosome if x not in child.chromosome]
+            if self.smart_crossover:
+                i = other.chromosome.index(self.chromosome[0])
+                other_chromosome_1 = other.chromosome[i:] + other.chromosome[:i]
+                other_chromosome_2 = [other_chromosome_1[0]] + other_chromosome_1[-1:0:-1]
+                assert len(other_chromosome_1) == len(self.chromosome)
+                self_set = set()
+                other_set_1 = set()
+                other_set_2 = set()
+                partition_candidates_1 = []
+                partition_candidates_2 = []
+                for i in range(1, len(self.chromosome)-1):
+                    self_set.add(self.chromosome[i])
+                    other_set_1.add(other_chromosome_1[i])
+                    other_set_2.add(other_chromosome_2[i])
+                    if self_set == other_set_1:
+                        partition_candidates_1.append(i)
+                    if self_set == other_set_2:
+                        partition_candidates_2.append(i)
+                partition_candidates, other_chromosome = [partition_candidates_1, other_chromosome_1] if len(partition_candidates_1) > len(partition_candidates_2) else [partition_candidates_2, other_chromosome_2]
+                partition_candidates = [x for x in partition_candidates if 0.3*len(self.chromosome) < x < 0.6*len(self.chromosome)]
+                if len(partition_candidates) == 0:
+                    # print('no candidates')
+                    partition = random.randint(0, len(self.chromosome)-1)
+                else:
+                    partition = random.choice(partition_candidates)
+                # print(self.chromosome)
+                # print(other_chromosome)
+                # print('candidates =', partition_candidates)
+                # print('partition =', partition)
+                child.chromosome = self.chromosome[:partition]
+                child.chromosome += [x for x in other_chromosome if x not in child.chromosome]
+            else:
+                partition = random.randint(0, len(self.chromosome)-1)
+                child.chromosome = self.chromosome[:partition]
+                child.chromosome += [x for x in other.chromosome if x not in child.chromosome]
         elif self.chromosome_type == 'b':
             partition = random.randint(0, len(self.chromosome)-1)
             child.chromosome = self.chromosome[:partition]
@@ -156,14 +195,72 @@ class TSP(object):
             child.chromosome = []
             child.chromosome += self.chromosome[self_partition:]
             child.chromosome += other.chromosome[:other_partition]
+            
+            if self.dynamic_mutation_inheritance:
+                child.dynamic_mutation_threshold = self.dynamic_mutation_threshold
+                child.dynamic_mutation_amplitude = self.dynamic_mutation_amplitude
                 
         return child
 
 
     def mutate(self, scope_data=None):
+        if self.dynamic_mutation and scope_data is not None:
+            good = scope_data['good_mutation']
+            bad = scope_data['bad_mutation']
+            no = scope_data['no_mutation']
+            if good != 0 and bad != 0:
+                # mutation_prob = self.mutation_prob // (good / bad)
+                mutation_prob = int(self.mutation_prob * (0.25 + (good + bad) / good))
+            else:
+                mutation_prob = int(self.mutation_prob)
+            if self.dynamic_mutation_threshold * good > bad:
+                mutation_prob /= self.dynamic_mutation_amplitude
+                
+                if self.dynamic_mutation_inheritance:
+                    self.dynamic_mutation_amplitude += 0.5
+                    if self.dynamic_mutation_amplitude > 5:
+                        self.dynamic_mutation_amplitude = 5
+                    self.dynamic_mutation_threshold -= 0.05
+                    if self.dynamic_mutation_threshold < 0.2:
+                        self.dynamic_mutation_threshold = 0.2
+                        
+            else:
+                if self.dynamic_mutation_inheritance:
+                    self.dynamic_mutation_amplitude -= 0.5
+                    if self.dynamic_mutation_amplitude < 2:
+                        self.dynamic_mutation_amplitude = 2
+                    self.dynamic_mutation_threshold += 0.05
+                    if self.dynamic_mutation_threshold > 0.5:
+                        self.dynamic_mutation_threshold = 0.5
+                        
+                
+            # print(mutation_prob)
+        else:
+            mutation_prob = self.mutation_prob
+        
         self.fitness = None
-        if random.randint(0, self.mutation_prob) == 0:
-            if self.chromosome_type == 'b':
+        if random.randint(0, mutation_prob) == 0:
+            if self.dynamic_mutation or True:
+                fitness_before = self.get_fitness()
+                self.fitness = None
+                
+            if self.chromosome_type == 'a':
+                a_index = random.randint(0, self.size-1)
+                b_index = random.randint(0, self.size-1)
+                if a_index > b_index:
+                    a_index, b_index = b_index, a_index
+                if random.randint(0,1) == 0:
+                    # swap edges
+                    if a_index == 0:
+                        self.chromosome[a_index:b_index] = self.chromosome[b_index-1::-1]
+                    else:
+                        self.chromosome[a_index:b_index] = self.chromosome[b_index-1:a_index-1:-1]
+                else:
+                    # insert node after node
+                    node = self.chromosome.pop(a_index)
+                    self.chromosome.insert(b_index, node)
+                    
+            elif self.chromosome_type == 'b':
                 a_index = random.randint(0, self.size-1)
                 if self.cities_matrix is None:
                     self.cities_matrix = []
@@ -195,15 +292,20 @@ class TSP(object):
                     self.chromosome.insert(b_index, node)
                 self.chromosome = [(city, i) for i, (city, order) in enumerate(self.chromosome)]
         
-            if self.chromosome_type == 'c':
+            elif self.chromosome_type == 'c':
                 if random.randint(0, 10) != 0:
                     self.chromosome.append((random.randint(0, self.size-1),random.randint(0, self.size-1)))
                 else:
                     if len(self.chromosome) > 0:
                         del self.chromosome[random.randint(0, len(self.chromosome)-1)]
             
-            
-        return
+            if self.dynamic_mutation or True:
+                fitness_after = self.get_fitness()
+                # if fitness_after < fitness_before:
+                    # print('good one: before = {}, after = {}'.format(fitness_before, fitness_after))
+                return fitness_after < fitness_before
+        
+        return None
         i1 = random.randint(0, self.size-1)
         i2 = random.randint(0, self.size-1)
         temp = self.chromosome[i1]
@@ -228,7 +330,7 @@ class TSP(object):
             x2, y2 = self.cities[self.city_index_by_order(self.size-1)]
             plt.plot([x1, x2], [y1, y2], color='y')
             plt.show(block=False)
-            plt.pause(0.001)
+            plt.pause(interval=0.001)
         elif self.output_mode == 'console':
             print(self.chromosome)
         

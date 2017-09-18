@@ -9,6 +9,8 @@ class BasePopulation(object):
         for _ in range(self.expansion_factor * len(self.population)):
             parent1 = random.choice(self.population)
             parent2 = random.choice(self.population)
+            # parent1 = self.population[int(random.triangular(0, self.size-1, 0))]
+            # parent2 = self.population[int(random.triangular(0, self.size-1, 0))]
             child = parent1.get_child(parent2)
             self.population.append(child)
             
@@ -27,8 +29,12 @@ class SimplePopulation(BasePopulation):
         self.individual_class = individual
         self.config_file = config_file
         
+        self.scope_data = None
+        
         self.size = config.getint('population', 'size')
         self.expansion_factor = config.getint('population', 'expansion_factor')
+        self.expansion_type = config.get('population', 'expansion_type')
+        
         self.population = [individual(config_file=config_file) for _ in range(self.size)]
         self.generation = 0
         
@@ -41,6 +47,39 @@ class SimplePopulation(BasePopulation):
                 individual.reference_solution = ref_solution
             self.population[0].chromosome = []
             
+            
+    def expand_population(self):
+        for _ in range(self.expansion_factor * len(self.population)):
+            if self.expansion_type == 'unified':
+                parent1 = random.choice(self.population)
+                parent2 = random.choice(self.population)
+            elif self.expansion_type == 'weighted':
+                fitnesses = [x.get_fitness() for x in self.population]
+                parent1, parent2 = random.choices(self.population, weights=fitnesses, k=2)
+            elif self.expansion_type == 'different':
+                k = 5
+                candidates = random.choices(self.population, k=k)
+                parent1 = candidates[0]
+                pairs = [(parent1.chromosome[i], parent1.chromosome[i+1]) for i in range(len(parent1.chromosome)-1)]
+                pairs.append((parent1.chromosome[0], parent1.chromosome[-1]))
+                # print(pairs)
+                min_count = len(parent1.chromosome)+1
+                parent2 = None
+                for i in range(1,k):
+                    candidate = candidates[i]
+                    c_pairs = [(candidate.chromosome[i], candidate.chromosome[i+1]) for i in range(len(candidate.chromosome)-1)]
+                    c_pairs.append((candidate.chromosome[0], candidate.chromosome[-1]))
+                    count = 0
+                    for (x,y) in c_pairs:
+                        if (x,y) in pairs or (y,x) in pairs:
+                            count += 1
+                        if count < min_count:
+                            min_count = count
+                            parent2 = candidate
+            # parent1 = self.population[int(random.triangular(0, self.size-1, 0))]
+            # parent2 = self.population[int(random.triangular(0, self.size-1, 0))]
+            child = parent1.get_child(parent2)
+            self.population.append(child)
                 
 
     def process_generation(self):
@@ -48,12 +87,19 @@ class SimplePopulation(BasePopulation):
 
         # min_val = min([min([x for x in i.chromosome]) for i in self.population])
         # max_val = max([max([x for x in i.chromosome]) for i in self.population])
-        scope_data = None
+        # scope_data = None
         # min_val = 1
         # max_val = 9
         # scope_data = {'min_val': min_val, 'max_val': max_val}
         # print(scope_data)
-        list(map(lambda x: x.mutate(scope_data=scope_data), self.population))
+        
+        # TODO: mutate only the newcomers
+        mutation_res = list(map(lambda x: x.mutate(scope_data=self.scope_data), self.population))
+        no_mutation = sum([1 for x in mutation_res if x is None])
+        bad_mutation = sum([1 for x in mutation_res if x == False])
+        good_mutation = sum([1 for x in mutation_res if x == True])
+        self.scope_data = {'no_mutation': no_mutation, 'bad_mutation': bad_mutation, 'good_mutation': good_mutation}
+        # print(no_mutation, bad_mutation, good_mutation)
         # [x.mutate() for x in self.population]
         self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
         self.population = self.population[:self.size]
