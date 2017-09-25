@@ -1,7 +1,10 @@
 import os
 import re
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from gt.examples.tsp import TSP
+
+dataset = 'wsahara'
+# dataset = 'djibouti'
 
 def get_xssyss(log):
     xss = []
@@ -37,7 +40,11 @@ def visualize(logs):
     
     
 def stat_run(xs, ys):
-    optimal = 27603
+    global dataset
+    if dataset == 'wsahara':
+        optimal = 27603
+    elif dataset == 'djibouti':
+        optimal = 6656
     for x, y in zip(xs, ys):
         if y < 1.01 * optimal:
             return x
@@ -65,31 +72,22 @@ def stats(logs):
     
 def analyze(logs):
     stats(logs)
-    visualize(logs)
+    # visualize(logs)
 
 
 if __name__ == '__main__':
-    analyze([
-        # '14-09-2017-10-51-55.60.log',
-        # '14-09-2017-10-55-48.03.log',
-        # '14-09-2017-11-38-08.26.log',
-        # '14-09-2017-11-14-50.71.log',
-        # '14-09-2017-11-41-09.22.log',
-        # 'prob_2.log',
-        # 'prob_2_dynamic_2.log',
-        # 'prob_5_dynamic_2.log',
-        'prob_5_dynamic_5.log',
-        # 'prob_5_dynamic_5_inheritance.log',
-        # '14-09-2017-13-11-30.26.log',
-        # 'prob_5_dynamic_5_no_inheritance.log',
-        # 'prob_5_dynamic_5_partial_inheritance.log',
-        # 'prob_5_dynamic_5_partial_inheritance_better.log',
-        # 'smart.log',
-        # 'smart2.log',
-        'prob_5_b.log',
-        # 'prob_d_5.log',
-        # 'prob_d_2.log',
-        'diff_100.log',
-        'weight_100.log',
-        'unif_100.log',
-        ])
+    if dataset == 'wsahara':
+        analyze([
+            # 'prob_5_dynamic_5.log',
+            # 'prob_5_b.log',
+            # 'unif_100.log',
+            'weight_100.log',
+            'diff_100.log',
+            ])
+    elif dataset == 'djibouti':
+        analyze([
+            'djib_unif_100.log',
+            'djib_weight_100.log',
+            'djib_diff_100.log',
+            ])
+        
