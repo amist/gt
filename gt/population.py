@@ -35,7 +35,11 @@ class SimplePopulation(BasePopulation):
         self.expansion_factor = config.getint('population', 'expansion_factor')
         self.expansion_type = config.get('population', 'expansion_type')
         
-        self.population = [individual(config_file=config_file) for _ in range(self.size)]
+        self.config_mode = config.get('runner', 'config_mode')
+        if self.config_mode == 'file':
+            self.population = [individual(config_file=config_file) for _ in range(self.size)]
+        elif self.config_mode == 'object':
+            self.population = [individual(config=config) for _ in range(self.size)]
         self.generation = 0
         
     def reset_population(self):
