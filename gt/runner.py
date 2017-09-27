@@ -3,12 +3,27 @@ import os
 import sys
 import json
 import configparser
-
+import logging
+import datetime
 
 class Runner(object):
     def __init__(self, config_file):
         config = configparser.ConfigParser()
         config.read(config_file)
+        
+        self.logger = logging.getLogger('result')
+        self.logger.setLevel(logging.DEBUG)
+        fileh = logging.FileHandler('logs/logfile_{}.log'.format(str(datetime.datetime.now()).replace(' ', '_').replace(':', '.')))
+        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(message)s')
+        fileh.setFormatter(formatter)
+        self.logger.addHandler(fileh) 
+        
+        for section in config.sections():
+            self.logger.debug('[{}]'.format(section))
+            for (k, v) in config.items(section):
+                self.logger.debug('{} = {}'.format(k, v))
+        self.logger.debug('---')
         
         self.debug = config.getboolean('runner', 'debug')
         self.generations_number = config.getint('runner', 'generations_number')
@@ -42,10 +57,13 @@ class Runner(object):
                     elif self.population.evolution_type == 'progressive':
                         if self.population.ch_expansion_finished:
                             print('Generation: {:2}: Best Fitness: {:3}'.format(i, self.population.get_best().get_fitness()), file=sys.stderr)
+                            self.logger.info('Generation: {:2}: Best Fitness: {:3}'.format(i, self.population.get_best().get_fitness()))
                         else:
                             print('Generation: {:2}: Chromosome Size: {}, Partial Fitness: {:3}'.format(i, self.population.get_best().size, self.population.get_best().get_fitness()), file=sys.stderr)
+                            self.logger.info('Generation: {:2}: Chromosome Size: {}, Partial Fitness: {:3}'.format(i, self.population.get_best().size, self.population.get_best().get_fitness()))
                     if self.output_mode == 'graphic' or self.output_mode == 'console':
                         self.population.get_best().print()
+                        self.logger.info(self.population.get_best().chromosome)
                     elif self.output_mode == 'json':
                         generation = [x.get_solution() for x in self.population.population]
                         json_output['generations'].append(generation)
