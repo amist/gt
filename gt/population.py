@@ -101,15 +101,22 @@ class SimplePopulation(BasePopulation):
         self.scope_data = {'no_mutation': no_mutation, 'bad_mutation': bad_mutation, 'good_mutation': good_mutation}
         # print(no_mutation, bad_mutation, good_mutation)
         # [x.mutate() for x in self.population]
-        self.population.sort(key=lambda x: x.get_fitness(), reverse=False)
+        for i, individual in enumerate(self.population):
+            try:
+                assert len(individual.chromosome) == individual.size
+            except AssertionError:
+                print('removing corrupted individual', i, individual.chromosome)
+                self.population.remove(individual)  # ugly
+                # raise AssertionError
+        self.population.sort(key=lambda x: x.get_fitness(self.generation), reverse=False)
         self.population = self.population[:self.size]
         
         self.generation += 1
-        if self.generation % 50 == 0:
-            self.reset_population()
-        else:
-            if self.population[0].chromosome == self.population[-1].chromosome:
-                return 'convergence'
+        # if self.generation % 50 == 0:
+            # self.reset_population()     # does nothing
+        # else:
+            # if self.population[0].chromosome == self.population[-1].chromosome:
+                # return 'convergence'
             
             
         # sort_chromosome = getattr(self.population[0], "sort_chromosome", None)

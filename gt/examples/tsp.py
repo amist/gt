@@ -17,6 +17,15 @@ class TSP(object):
             self.cities = json.loads(f.read())
             self.size = len(self.cities)
             
+        self.order_file = self.config.get('problem', 'order_file')
+        with open(self.order_file, 'r') as f:
+            self.order = json.loads(f.read())
+            
+        self.evolution_type = self.config.get('individual', 'evolution_type')
+        self.up_to = self.size      # the point in route up to which the fitness is calculated
+        self.generations_evolution_step = self.config.getint('individual', 'generations_evolution_step')
+        self.evolution_start = self.config.getint('individual', 'evolution_start')
+            
         self.dynamic_mutation = self.config.getboolean('individual', 'dynamic_mutation')
         self.dynamic_mutation_inheritance = self.config.getboolean('individual', 'dynamic_mutation_inheritance')
         self.dynamic_mutation_amplitude = 2
@@ -91,18 +100,57 @@ class TSP(object):
             # return str(self.chromosome.index(i))
             
             
-    def get_fitness(self):
+    def get_fitness(self, generation=None):
         if self.fitness is None:
-            dist = 0
-            prev_index = self.city_index_by_order(self.size-1)
-            for i in range(self.size):
-                cur_index = self.city_index_by_order(i)
-                x1, y1 = self.cities[prev_index]
-                x2, y2 = self.cities[cur_index]
-                dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
-                prev_index = cur_index
-            
-            self.fitness = dist
+            if self.evolution_type == 'simple':
+                dist = 0
+                prev_index = self.city_index_by_order(self.size-1)
+                for i in range(self.size):
+                    cur_index = self.city_index_by_order(i)
+                    x1, y1 = self.cities[prev_index]
+                    x2, y2 = self.cities[cur_index]
+                    dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
+                    prev_index = cur_index
+                
+                self.fitness = dist
+            elif self.evolution_type == 'progressive':
+                try:
+                    assert len(self.chromosome) == self.size
+                except AssertionError:
+                    print('corrupted individual', self.chromosome)
+                    self.chromosome = list(range(self.size))
+                    # raise AssertionError
+                # print(self.chromosome)
+                zero = self.chromosome.index(self.evolution_start)
+                route = self.chromosome[:]
+                # route = self.chromosome[zero:] + self.chromosome[:zero]     # route should start at 0
+                # assert route[0] == self.evolution_start
+                # assert self.order[0] == self.evolution_start
+                self.up_to = min(self.size, 2 + generation // self.generations_evolution_step)     # check only part of the route
+                max_index = max([route.index(x) for x in self.order[:self.up_to]])
+                
+                junk = [x for x in self.chromosome if x not in route]
+                random.shuffle(junk)
+                try:
+                    assert len(self.chromosome) == self.size
+                except AssertionError:
+                    print(self.chromosome)
+                    print(route)
+                    print(junk)
+                    raise AssertionError
+                self.chromosome = route + junk
+                
+                dist = 0
+                prev_index = self.city_index_by_order(self.up_to-1)
+                for i in range(max_index):
+                    cur_index = self.city_index_by_order(i)
+                    x1, y1 = self.cities[prev_index]
+                    x2, y2 = self.cities[cur_index]
+                    dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
+                    prev_index = cur_index
+                
+                self.fitness = dist
+                
         return self.fitness
         
         
@@ -158,6 +206,41 @@ class TSP(object):
                 # print('partition =', partition)
                 child.chromosome = self.chromosome[:partition]
                 child.chromosome += [x for x in other_chromosome if x not in child.chromosome]
+            elif self.evolution_type == 'progressive':
+                self_real = [x for x in self.chromosome if x in self.order[:self.up_to]]
+                # print(self.up_to)
+                # print(self_real)
+                other_real = [x for x in other.chromosome if x in self.order[:self.up_to]]
+                try:
+                    assert len(self_real) == len(other_real)
+                except AssertionError:
+                    print(self.chromosome)
+                    print(other.chromosome)
+                    print(self_real)
+                    print(other_real)
+                    raise AssertionError
+                assert set(self_real) == set(other_real)
+                
+                partition = random.randint(0, len(self_real)-1)
+                # child.chromosome = self_real[:partition] + other_real[partition:]
+                child.chromosome = self_real[:partition] + [x for x in other_real if x not in self_real[:partition]]
+                assert len(child.chromosome) == len(self_real)
+                self_junk = [x for x in self.chromosome if x not in child.chromosome]
+                random.shuffle(self_junk)
+                child.chromosome += self_junk
+                try:
+                    assert len(child.chromosome) == len(self.chromosome)
+                    assert len(child.chromosome) == self.size
+                except AssertionError:
+                    print(self_real)
+                    print(other_real)
+                    print(self_junk)
+                    print(partition)
+                    print(child.chromosome)
+                    raise AssertionError
+                    
+                return child
+                
             else:
                 partition = random.randint(0, len(self.chromosome)-1)
                 child.chromosome = self.chromosome[:partition]
@@ -240,13 +323,17 @@ class TSP(object):
         
         self.fitness = None
         if random.randint(0, mutation_prob) == 0:
-            if self.dynamic_mutation or True:
+            if self.dynamic_mutation:
                 fitness_before = self.get_fitness()
                 self.fitness = None
                 
             if self.chromosome_type == 'a':
-                a_index = random.randint(0, self.size-1)
-                b_index = random.randint(0, self.size-1)
+                if self.evolution_type == 'simple':
+                    a_index = random.randint(0, self.size-1)
+                    b_index = random.randint(0, self.size-1)
+                elif self.evolution_type == 'progressive':
+                    a_index = self.chromosome.index(random.choice(self.order[:self.up_to]))
+                    b_index = self.chromosome.index(random.choice(self.order[:self.up_to]))
                 if a_index > b_index:
                     a_index, b_index = b_index, a_index
                 if random.randint(0,1) == 0:
@@ -299,7 +386,7 @@ class TSP(object):
                     if len(self.chromosome) > 0:
                         del self.chromosome[random.randint(0, len(self.chromosome)-1)]
             
-            if self.dynamic_mutation or True:
+            if self.dynamic_mutation:
                 fitness_after = self.get_fitness()
                 # if fitness_after < fitness_before:
                     # print('good one: before = {}, after = {}'.format(fitness_before, fitness_after))
@@ -325,7 +412,14 @@ class TSP(object):
                 x1, y1 = self.cities[self.city_index_by_order(i-1)]
                 x2, y2 = self.cities[self.city_index_by_order(i)]
                 # plt.arrow(x1, y1, x2-x1, y2-y1, head_width=0.05, head_length=0.1, fc='k', ec='k')
-                plt.plot([x1, x2], [y1, y2], color='k')
+                if self.evolution_type == 'progressive':
+                    if int(self.city_index_by_order(i)) in self.order[:self.up_to]:
+                        plt.plot([x1, x2], [y1, y2], color='k')
+                    else:
+                        ...
+                        # plt.plot([x1, x2], [y1, y2], color='y')
+                else:
+                    plt.plot([x1, x2], [y1, y2], color='k')
             x1, y1 = self.cities[self.city_index_by_order(0)]
             x2, y2 = self.cities[self.city_index_by_order(self.size-1)]
             plt.plot([x1, x2], [y1, y2], color='y')
