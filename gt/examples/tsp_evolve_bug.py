@@ -29,28 +29,14 @@ class TSPEvolve(object):
             
         self.mutation_prob = self.config.getint('individual', 'mutation_probability')
         
-        self.size = 4
-        self.chromosome = [x[0] for x in self.order[:self.size]]
+        self.size = 2
+        self.chromosome = self.order[:self.size]
         random.shuffle(self.chromosome)
         # print(self.chromosome)
 
         self.output_mode = self.config.get('runner', 'output_mode')
         
         self.fitness = None
-        
-        
-    def expand_chromosome(self):
-        if len(self.chromosome) == len(self.cities):
-            return True
-        # print(self.chromosome)
-        n = self.order[self.size][0]
-        # print(n)
-        after = self.order[self.size][1]
-        index = self.chromosome.index(after)
-        self.chromosome = self.chromosome[:index] + [n] + self.chromosome[index:]
-        self.size = len(self.chromosome)
-        # print(self.chromosome)
-        return False
         
         
     def get_solution(self):
@@ -100,19 +86,13 @@ class TSPEvolve(object):
         
         
     def get_child(self, other):
-        if len(self.chromosome) > self.size:
-            # print('fixing self.chromosome')
-            self.chromosome = self.chromosome[:self.size]
-        if len(other.chromosome) > other.size:
-            # print('fixing other.chromosome')
-            other.chromosome = other.chromosome[:other.size]
-        # print('begin get child')
-        # print(self.chromosome, id(self.chromosome))
-        # print(other.chromosome, id(other.chromosome))
+        print('begin get child')
+        print(self.chromosome, id(self.chromosome))
+        print(other.chromosome, id(other.chromosome))
         child = TSPEvolve(config=self.config, const_data=self.const_data)
-        # if self is other:
-            # print('self is other')
-            # return child
+        if self is other:
+            print('self is other')
+            return child
         
         partition = random.randint(0, len(self.chromosome)-1)
         child.chromosome = self.chromosome[:partition]
@@ -125,19 +105,13 @@ class TSPEvolve(object):
             print(partition)
         if id(child.chromosome) == id(self.chromosome):
             print(partition)
-        # print('middle get child')
-        # print(self.chromosome)
-        # print(other.chromosome)
-        # print(child.chromosome)
-        try:
-            assert len(child.chromosome) == len(self.chromosome) == len(other.chromosome)
-        except AssertionError:
-            # print(len(child.chromosome), len(self.chromosome), len(other.chromosome))
-            # child.chromosome = child.chromosome[:child.size]
-            return None
+        print('middle get child')
+        print(self.chromosome)
+        print(other.chromosome)
+        print(child.chromosome)
+        assert len(child.chromosome) == len(self.chromosome) == len(other.chromosome)
         
-        # print('creating', child.chromosome, 'id =', id(child.chromosome))
-        child.size = self.size
+        print('creating', child.chromosome, 'id =', id(child.chromosome))
         return child
 
 

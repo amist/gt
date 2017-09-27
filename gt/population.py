@@ -35,12 +35,22 @@ class SimplePopulation(BasePopulation):
         self.expansion_factor = config.getint('population', 'expansion_factor')
         self.expansion_type = config.get('population', 'expansion_type')
         
+        self.evolution_type = config.get('population', 'evolution_type')
+        self.ch_expansion_finished = False
+        
         self.config_mode = config.get('runner', 'config_mode')
         if self.config_mode == 'file':
             self.population = [individual(config_file=config_file) for _ in range(self.size)]
         elif self.config_mode == 'object':
             self.population = [individual(config=config) for _ in range(self.size)]
         self.generation = 0
+        
+        for i, individual in enumerate(self.population):
+            try:
+                assert len(individual.chromosome) == individual.size
+            except AssertionError:
+                print('In init!!! removing corrupted individual', i, individual.chromosome)
+                self.population.remove(individual)  # ugly
         
     def reset_population(self):
         return
@@ -53,7 +63,7 @@ class SimplePopulation(BasePopulation):
             
             
     def expand_population(self):
-        for _ in range(self.expansion_factor * len(self.population)):
+        for xx in range(self.expansion_factor * len(self.population)):
             if self.expansion_type == 'unified':
                 parent1 = random.choice(self.population)
                 parent2 = random.choice(self.population)
@@ -82,8 +92,31 @@ class SimplePopulation(BasePopulation):
                             parent2 = candidate
             # parent1 = self.population[int(random.triangular(0, self.size-1, 0))]
             # parent2 = self.population[int(random.triangular(0, self.size-1, 0))]
+            # print('creating', xx)
             child = parent1.get_child(parent2)
-            self.population.append(child)
+            if child is not None:
+                try:
+                    # assert len(child.chromosome) == len(parent1.chromosome) == len(parent2.chromosome)
+                    assert id(child.chromosome) != id(parent1.chromosome)
+                    assert id(child.chromosome) != id(parent2.chromosome)
+                except AssertionError:
+                    print(id(child.chromosome), id(parent1.chromosome), id(parent2.chromosome))
+                    raise AssertionError
+                
+                self.population.append(child)
+                
+            # for individual in self.population:
+                # print(len(individual.chromosome))
+            
+            # print('printing all population')
+            # for i, individual in enumerate(self.population):
+                # print(i, individual.chromosome, id(individual.chromosome))
+            
+            # for i, individual in enumerate(self.population):
+                # try:
+                    # assert len(individual.chromosome) == individual.size
+                # except AssertionError:
+                    # print('during expand, identified corrupted', i, individual.chromosome)
                 
 
     def process_generation(self):
@@ -105,11 +138,20 @@ class SimplePopulation(BasePopulation):
         self.scope_data = {'no_mutation': no_mutation, 'bad_mutation': bad_mutation, 'good_mutation': good_mutation}
         # print(no_mutation, bad_mutation, good_mutation)
         # [x.mutate() for x in self.population]
+        
+        # ids = set()
+        # for individual in self.population:
+            # cur = id(individual.chromosome)
+            # assert cur not in ids
+            # ids.add(cur)
         for i, individual in enumerate(self.population):
             try:
                 assert len(individual.chromosome) == individual.size
             except AssertionError:
-                print('removing corrupted individual', i, individual.chromosome)
+                before = individual.chromosome[:]
+                individual.chromosome = individual.chromosome[:individual.size]
+                # print('fixinfixing currupted:', before, '->', individual.chromosome)
+                # print('removing corrupted individual', i, individual.chromosome)
                 self.population.remove(individual)  # ugly
                 # raise AssertionError
         self.population.sort(key=lambda x: x.get_fitness(self.generation), reverse=False)
@@ -121,7 +163,12 @@ class SimplePopulation(BasePopulation):
         # else:
             # if self.population[0].chromosome == self.population[-1].chromosome:
                 # return 'convergence'
-            
+                
+        if self.evolution_type == 'progressive':
+            # if self.generation % 10 == 0:
+            if self.population[0].chromosome == self.population[-1].chromosome:
+                for individual in self.population:
+                    self.ch_expansion_finished = individual.expand_chromosome()
             
         # sort_chromosome = getattr(self.population[0], "sort_chromosome", None)
         # if callable(sort_chromosome):

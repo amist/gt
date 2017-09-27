@@ -37,7 +37,13 @@ class Runner(object):
             for i in range(self.generations_number):
                 ret = self.population.process_generation()
                 if self.debug:
-                    print('Generation: {:2}: Best Fitness: {:3}'.format(i, self.population.get_best().get_fitness()), file=sys.stderr)
+                    if self.population.evolution_type == 'simple':
+                        print('Generation: {:2}: Best Fitness: {:3}'.format(i, self.population.get_best().get_fitness()), file=sys.stderr)
+                    elif self.population.evolution_type == 'progressive':
+                        if self.population.ch_expansion_finished:
+                            print('Generation: {:2}: Best Fitness: {:3}'.format(i, self.population.get_best().get_fitness()), file=sys.stderr)
+                        else:
+                            print('Generation: {:2}: Chromosome Size: {}, Partial Fitness: {:3}'.format(i, self.population.get_best().size, self.population.get_best().get_fitness()), file=sys.stderr)
                     if self.output_mode == 'graphic' or self.output_mode == 'console':
                         self.population.get_best().print()
                     elif self.output_mode == 'json':
