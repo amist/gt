@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+import json
 import configparser
 import random
 
@@ -44,6 +46,20 @@ class SimplePopulation(BasePopulation):
         elif self.config_mode == 'object':
             self.population = [individual(config=config) for _ in range(self.size)]
         self.generation = 0
+        
+        try:
+            self.initial_population = config.get('population', 'initial_population')
+        except configparser.NoOptionError:
+            self.initial_population = ''
+        if self.initial_population != '':
+            with open(self.initial_population) as f:
+                chromosomes = json.load(f)
+            # chromosomes = json.load(self.initial_population)
+            self.size = len(chromosomes)
+            self.population = self.population[:self.size]
+            for i, chromosome in enumerate(chromosomes):
+                self.population[i].chromosome = chromosome
+                self.population[i].size = len(chromosome)
         
         for i, individual in enumerate(self.population):
             try:

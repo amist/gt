@@ -239,6 +239,8 @@ class TSP(object):
                     print(child.chromosome)
                     raise AssertionError
                     
+                child.size = self.size      # added for initial population
+                    
                 return child
                 
             else:
