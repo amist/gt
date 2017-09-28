@@ -85,10 +85,24 @@ class SimplePopulation(BasePopulation):
                 parent2 = random.choice(self.population)
             elif self.expansion_type == 'weighted':
                 fitnesses = [x.get_fitness() for x in self.population]
+                max_fitness = max(fitnesses)
+                fitnesses = [1 + max_fitness - x for x in fitnesses]
+                try:
+                    parent1, parent2 = random.choices(self.population, weights=fitnesses, k=2)
+                except IndexError:
+                    print(len(self.population))
+                    raise IndexError
+            elif self.expansion_type == 'factor_weighted':
+                fitnesses = [x.get_fitness() * 10 for x in self.population]
+                max_fitness = max(fitnesses)
+                fitnesses = [1 + max_fitness - x for x in fitnesses]
                 parent1, parent2 = random.choices(self.population, weights=fitnesses, k=2)
             elif self.expansion_type == 'different':
                 k = 5
-                candidates = random.choices(self.population, k=k)
+                fitnesses = [x.get_fitness() for x in self.population]
+                max_fitness = max(fitnesses)
+                fitnesses = [1 + max_fitness - x for x in fitnesses]
+                candidates = random.choices(self.population, weights=fitnesses, k=k)
                 parent1 = candidates[0]
                 pairs = [(parent1.chromosome[i], parent1.chromosome[i+1]) for i in range(len(parent1.chromosome)-1)]
                 pairs.append((parent1.chromosome[0], parent1.chromosome[-1]))
@@ -177,8 +191,9 @@ class SimplePopulation(BasePopulation):
         # if self.generation % 50 == 0:
             # self.reset_population()     # does nothing
         # else:
-            # if self.population[0].chromosome == self.population[-1].chromosome:
-                # return 'convergence'
+        if self.evolution_type == 'simple':
+            if self.population[0].chromosome == self.population[-1].chromosome:
+                return 'convergence'
                 
         if self.evolution_type == 'progressive':
             # if self.generation % 10 == 0:
