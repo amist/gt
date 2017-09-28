@@ -4,3 +4,4 @@ __pycache__/
 *.png
 *.pyc
 output.json
+log_animations/
