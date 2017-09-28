@@ -1,6 +1,6 @@
 import sys
 
-base_dir = ''
+base_dir = 'C:/projects/mine/gt'
 sys.path.insert(0, base_dir)
 sys.path.insert(0, base_dir + 'gt')
 sys.path.insert(0, base_dir + 'gt/tests')
