@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-import json
+import copy
 import configparser
 import random
 
@@ -212,6 +212,9 @@ class SimplePopulation(BasePopulation):
 
     def get_best(self):
         return self.population[0]
+        
+    def get_best_chromosome(self):
+        return self.population[0].chromosome
 
 
 class TypesPopulation(BasePopulation):
@@ -274,7 +277,8 @@ class TspPopulation(BasePopulation):
         self.expansion_factor = config.getint('population', 'expansion_factor')
         self.expansion_type = config.get('population', 'expansion_type')
         
-        self.evolution_type = config.get('population', 'evolution_type')
+        self.evolution_type = 'progressive'
+        self.ch_expansion_finished = False
         
         self.config_mode = config.get('runner', 'config_mode')
         self.output_mode = config.get('runner', 'output_mode')
@@ -285,17 +289,17 @@ class TspPopulation(BasePopulation):
         for start_point_ratio in start_point_ratios:
             self.population += [individual(config=config, start_point_ratio=start_point_ratio) for _ in range(self.size)]
         self.generation = 0
+        self.last_expansion = 0
         # for individual in self.population:
             # print(individual)
         
         
     def expand_population(self):
-        
-        current_types = set()
+        self.current_types = set()
         for individual in self.population:
-            current_types.add(individual.start_point)
+            self.current_types.add(individual.start_point)
             
-        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in current_types]
+        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in self.current_types]
         
         for temp_population in temp_populations:        
             fitnesses = [x.get_fitness() for x in temp_population]
@@ -315,16 +319,63 @@ class TspPopulation(BasePopulation):
             
             
     def process_generation(self):
+        # for individual in self.population:
+            # print(individual.chromosome)
+            # print(individual.get_fitness())
         self.expand_population()
         
         map(lambda x: x.mutate(), self.population[self.size:])
         
-        current_types = set()
+        self.current_types = set()
         for individual in self.population:
-            current_types.add(individual.start_point)
+            self.current_types.add(individual.start_point)
             
-        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in current_types]
+        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in self.current_types]
         
+        if len(temp_populations) == 1:
+            self.ch_expansion_finished = True
+        
+        self.generation += 1
+        if self.population[0].chromosome == self.population[-1].chromosome:
+            if len(self.population[0].chromosome) == len(self.population[0].cities):
+                return 'convergence'
+            
+        current_chromosomes = [set(temp_population[0].chromosome) for temp_population in temp_populations]
+        max_size = max([len(c) for c in current_chromosomes])
+        if (self.generation - self.last_expansion) % (1 + max_size) == 0:
+            self.last_expansion = self.generation
+            for individual in self.population:
+                individual.expand_chromosome()
+                individual.fitness = None
+                # temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in current_types]
+
+        # merge types
+        current_chromosomes = [set(temp_population[0].chromosome) for temp_population in temp_populations]
+        # print(current_chromosomes)
+        
+        merge_values = self.what_to_merge(current_chromosomes)
+        if merge_values is not None:
+            a, b = merge_values
+            # print('going to merge', a, b)
+            
+            new_population = []
+            assert len(temp_populations[a]) == len(temp_populations[b])
+            for i in range(len(temp_populations[a])):
+                parent1 = temp_populations[a][i]
+                parent2 = temp_populations[b][i]
+                new_chromosome = parent1.chromosome
+                new_chromosome += [x for x in parent2.chromosome if x not in new_chromosome]
+                child = copy.copy(parent1)
+                child.chromosome = new_chromosome
+                child.size = len(new_chromosome)
+                # child = temp_populations[a][i].get_child(temp_populations[b][i])
+                
+                new_population.append(child)
+                
+            temp_populations[a] = temp_populations[b] = []
+            temp_populations.append(new_population)
+            
+            
         self.population = []
         for temp_population in temp_populations:
             temp_population.sort(key=lambda x: x.get_fitness(self.generation), reverse=False)
@@ -334,42 +385,59 @@ class TspPopulation(BasePopulation):
             
         # print(self.population)
         
+        
         # for individual in self.population:
             # print(individual)
         self.population.sort(key=lambda x: x.get_fitness(self.generation), reverse=False)
         # self.population = self.population[:self.size * self.types_number]
-        
-        self.generation += 1
-        if self.population[0].chromosome == self.population[-1].chromosome:
-            return 'convergence'
-            
-        # TODO: add gene to chromosomes
-        
-        # TODO: check for merging two types
-            
-            
-    # TODO: add print function
+    
+    
+    def what_to_merge(self, current_chromosomes):
+        for i in range(len(current_chromosomes)-1):
+            for j in range(i+1, len(current_chromosomes)):
+                # print('compare', i, j)
+                len_intersection = len(current_chromosomes[i] & current_chromosomes[j])
+                min_len = min(len(current_chromosomes[i]), len(current_chromosomes[j]))
+                # print('lengths:', len_intersection, min_len)
+                if len_intersection > 0.25 * min_len:       # TODO: change it to 2 (and change the merge method accordingly)
+                    return i, j     # maximum one merge per generation
+        return None
     
     
     def get_best(self):
         return self.population[0]
         
+    def get_best_chromosome(self):
+        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in self.current_types]
+        ch = []
+        for temp_population in temp_populations:
+            # temp_population[0].print()
+            ch.append(temp_population[0].chromosome)
+        return ch
+        
     def print_best(self):
-        current_types = set()
+        self.current_types = set()
         for individual in self.population:
-            current_types.add(individual.start_point)
+            self.current_types.add(individual.start_point)
             
-        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in current_types]
+        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in self.current_types]
         
         if self.output_mode == 'console':
-            for temp_population in temp_populations:
-                temp_population[0].print()
+            print(self.get_best_chromosome())
         elif self.output_mode == 'graphic':
             import matplotlib.pyplot as plt
             plt.clf()
+            
+            total_fitness = 0
             for temp_population in temp_populations:
                 temp_population[0].print()
+                # print(temp_population[0].get_fitness())
+                total_fitness += temp_population[0].get_fitness()
+            
+            fitness = sum([temp_population[0].get_fitness() for temp_population in temp_populations])
+            # print(fitness)
+            plt.suptitle('fitness = {}'.format(fitness))
             plt.show(block=False)
             plt.pause(interval=0.001)
-                
-                
+            
+            

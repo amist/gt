@@ -173,7 +173,7 @@ class TSPEvolve(object):
             plt.suptitle('fitness = {}'.format(self.get_fitness()))
             for city in self.cities:
                 x, y = self.cities[city]
-                plt.plot(x, y, '*', color='b')
+                plt.plot(x, y, '.', color='b')
             for i in range(1, self.size):
                 x1, y1 = self.cities[self.city_index_by_order(i-1)]
                 x2, y2 = self.cities[self.city_index_by_order(i)]

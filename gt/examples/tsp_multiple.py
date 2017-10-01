@@ -42,10 +42,27 @@ class TSPMultiple(object):
         if len(self.chromosome) == len(self.cities):
             return True
         # print(self.chromosome)
-        n = self.order[self.start_point][self.size][0]
+        # n = self.order[self.start_point][self.size][0]      # that's the old calculation, but with merges it doesn't necessarily need to be the size-th element
+        to_add = -1
+        for i in range(len(self.cities)):
+            n = self.order[self.start_point][i][0]
+            if n not in self.chromosome:
+                to_add = i
+                break
         # print(n)
-        after = self.order[self.start_point][self.size][1]
-        index = self.chromosome.index(after)
+        try:
+            # after = self.order[self.start_point][self.size][1]  # the old code
+            after = self.order[self.start_point][to_add][1]
+            index = self.chromosome.index(after)
+        except ValueError:
+            print(self.chromosome)
+            print(len(self.chromosome))
+            print(self.size)
+            print(self.start_point)
+            print(self.order[self.start_point])
+            print(n)
+            raise ValueError
+            
         self.chromosome = self.chromosome[:index] + [n] + self.chromosome[index:]
         self.size = len(self.chromosome)
         # print(self.chromosome)
@@ -134,7 +151,8 @@ class TSPMultiple(object):
             print(self.chromosome, other.chromosome, child.chromosome)
             # print(len(child.chromosome), len(self.chromosome), len(other.chromosome))
             # child.chromosome = child.chromosome[:child.size]
-            return None
+            # return None
+            print('different size crossover')
         
         # print('creating', child.chromosome, 'id =', id(child.chromosome))
         child.size = self.size
@@ -172,7 +190,7 @@ class TSPMultiple(object):
             # plt.suptitle('fitness = {}'.format(self.get_fitness()))
             for city in self.cities:
                 x, y = self.cities[city]
-                plt.plot(x, y, '*', color='b')
+                plt.plot(x, y, '.', color='b')
             for i in range(1, self.size):
                 x1, y1 = self.cities[self.city_index_by_order(i-1)]
                 x2, y2 = self.cities[self.city_index_by_order(i)]

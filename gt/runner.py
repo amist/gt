@@ -64,7 +64,8 @@ class Runner(object):
                     if self.output_mode == 'graphic' or self.output_mode == 'console':
                         self.population.print_best()
                         # self.population.get_best().print()
-                        self.logger.info(self.population.get_best().chromosome)
+                        # self.logger.info(self.population.get_best().chromosome)
+                        self.logger.info(self.population.get_best_chromosome())
                     elif self.output_mode == 'json':
                         generation = [x.get_solution() for x in self.population.population]
                         json_output['generations'].append(generation)

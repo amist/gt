@@ -4,7 +4,7 @@ import json
 import matplotlib.pyplot as plt
 
 cities_file = ''
-log_file = 'logs/evolve_vlsi131_60_1.log'
+log_file = 'logs/logfile_2017-10-01_16.48.43.330734.log'
 
 def get_cities(log_file):
     cities_file = ''
@@ -22,26 +22,27 @@ def get_cities(log_file):
         return json.loads(f.read())
         
 
-def create_frame(cities, generation, fitness, chromosome):
+def create_frame(cities, generation, fitness, chromosomes):
     plt.clf()
     plt.suptitle('generation = {}, fitness = {:.2f}'.format(generation, fitness))
     for city in cities:
         x, y = cities[city]
         plt.plot(x, y, '*', color='b')
-    for i in range(1, len(chromosome)):
-        x1, y1 = cities[chromosome[i-1]]
-        x2, y2 = cities[chromosome[i]]
+    for chromosome in chromosomes:
+        for i in range(1, len(chromosome)):
+            x1, y1 = cities[chromosome[i-1]]
+            x2, y2 = cities[chromosome[i]]
+            plt.plot([x1, x2], [y1, y2], color='k')
+        x1, y1 = cities[chromosome[0]]
+        x2, y2 = cities[chromosome[-1]]
         plt.plot([x1, x2], [y1, y2], color='k')
-    x1, y1 = cities[chromosome[0]]
-    x2, y2 = cities[chromosome[-1]]
-    plt.plot([x1, x2], [y1, y2], color='k')
     # plt.show(block=False)
     # plt.pause(interval=0.001)
     
     
 def get_rows(log_file):
     rows = []
-    generation = fitness = chromosome = None
+    generation = fitness = chromosomes = None
     
     with open(log_file, 'r') as f:
         for line in f:
@@ -67,16 +68,16 @@ def get_rows(log_file):
                         fitness = float(m.group(3))
                         # print('partial', generation, fitness)
             elif line.startswith('['):
-                chromosome = line
+                chromosomes = line
                 m = re.search(r'(\[.*\])', line)
                 if m:
-                    chromosome = json.loads(m.group(1))
-                    chromosome = [str(x) for x in chromosome]
+                    chromosomes = json.loads(m.group(1))
+                    chromosomes = [[str(x) for x in chromosome] for chromosome in chromosomes]
                 # print(chromosome)
                 
-            if generation is not None and fitness is not None and chromosome is not None:
-                rows.append((generation, fitness, chromosome))
-                generation = fitness = chromosome = None
+            if generation is not None and fitness is not None and chromosomes is not None:
+                rows.append((generation, fitness, chromosomes))
+                generation = fitness = chromosomes = None
                 
     return rows
                 
@@ -95,8 +96,8 @@ def create_images(log_file):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     for row in rows:
-        generation, fitness, chromosome = row
-        create_frame(cities, generation, fitness, chromosome)
+        generation, fitness, chromosomes = row
+        create_frame(cities, generation, fitness, chromosomes)
         plt.savefig(os.path.join(log_dir, '{:03d}.png'.format(generation)))
     
     
