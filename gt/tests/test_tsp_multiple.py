@@ -2,17 +2,16 @@ import sys
 import time
 import configparser
 from gt.runner import Runner
-from gt.examples.tsp_evolve import *
+from gt.examples.tsp_multiple import *
 # import cProfile
 
 # plt.ion()
 
 def run():
-    config_file = os.path.join(os.getcwd(), 'tsp_evolve.config')
+    config_file = os.path.join(os.getcwd(), 'tsp_multiple.config')
     
     config = configparser.ConfigParser()
     config.read(config_file)
-    start_point = '60'
     
     data_file = config.get('problem', 'data_file')
     with open(data_file, 'r') as f:
@@ -20,15 +19,15 @@ def run():
         
     order_file = config.get('problem', 'order_file')
     with open(order_file, 'r') as f:
-        order = json.loads(f.read())[start_point]
+        order = json.loads(f.read())
         
     const_data = {
         'cities': cities,
         'order': order,
-        'start_point': start_point,
+        'start_point': '0',
     }
     
-    k = TSPEvolve(config=config, const_data=const_data)
+    k = TSPMultiple(config=config, start_point_ratio=0, const_data=const_data)
     # k.print()
     runner = Runner(config_file=config_file)
     # plt.show()

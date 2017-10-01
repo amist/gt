@@ -277,29 +277,41 @@ class TspPopulation(BasePopulation):
         self.evolution_type = config.get('population', 'evolution_type')
         
         self.config_mode = config.get('runner', 'config_mode')
-        if self.config_mode == 'file':
-            self.population = [individual(config_file=config_file) for _ in range(self.size)]
-        elif self.config_mode == 'object':
-            self.population = [individual(config=config) for _ in range(self.size)]
+        self.output_mode = config.get('runner', 'output_mode')
+        
+        self.population = []
+        start_point_ratios = [0, 0.25, 0.5, 0.75]
+        self.types_number = len(start_point_ratios)
+        for start_point_ratio in start_point_ratios:
+            self.population += [individual(config=config, start_point_ratio=start_point_ratio) for _ in range(self.size)]
         self.generation = 0
+        # for individual in self.population:
+            # print(individual)
         
         
     def expand_population(self):
-        for xx in range(self.expansion_factor * len(self.population)):
-            fitnesses = [x.get_fitness() for x in self.population]
+        
+        current_types = set()
+        for individual in self.population:
+            current_types.add(individual.start_point)
+            
+        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in current_types]
+        
+        for temp_population in temp_populations:        
+            fitnesses = [x.get_fitness() for x in temp_population]
             max_fitness = max(fitnesses)
             fitnesses = [1 + max_fitness - x for x in fitnesses]
-            
-            # TODO: choose according to type
-            try:
-                parent1, parent2 = random.choices(self.population, weights=fitnesses, k=2)
-            except IndexError:
-                print(len(self.population))
-                raise IndexError
-                
-            child = parent1.get_child(parent2)
-                
-            self.population.append(child)
+            for xx in range(self.expansion_factor * len(temp_population)):
+                # TODO: choose according to type
+                try:
+                    parent1, parent2 = random.choices(temp_population, weights=fitnesses, k=2)
+                except IndexError:
+                    print(len(temp_population))
+                    raise IndexError
+                    
+                child = parent1.get_child(parent2)
+                    
+                self.population.append(child)
             
             
     def process_generation(self):
@@ -307,14 +319,32 @@ class TspPopulation(BasePopulation):
         
         map(lambda x: x.mutate(), self.population[self.size:])
         
-        # TODO: sort according to type
+        current_types = set()
+        for individual in self.population:
+            current_types.add(individual.start_point)
+            
+        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in current_types]
+        
+        self.population = []
+        for temp_population in temp_populations:
+            temp_population.sort(key=lambda x: x.get_fitness(self.generation), reverse=False)
+            temp_population = temp_population[:self.size]
+            # print(temp_population)
+            self.population += temp_population
+            
+        # print(self.population)
+        
+        # for individual in self.population:
+            # print(individual)
         self.population.sort(key=lambda x: x.get_fitness(self.generation), reverse=False)
-        self.population = self.population[:self.size]
+        # self.population = self.population[:self.size * self.types_number]
         
         self.generation += 1
         if self.population[0].chromosome == self.population[-1].chromosome:
             return 'convergence'
             
+        # TODO: add gene to chromosomes
+        
         # TODO: check for merging two types
             
             
@@ -325,4 +355,21 @@ class TspPopulation(BasePopulation):
         return self.population[0]
         
     def print_best(self):
-        self.population[0].print()
+        current_types = set()
+        for individual in self.population:
+            current_types.add(individual.start_point)
+            
+        temp_populations = [[individual for individual in self.population if individual.start_point == start_point] for start_point in current_types]
+        
+        if self.output_mode == 'console':
+            for temp_population in temp_populations:
+                temp_population[0].print()
+        elif self.output_mode == 'graphic':
+            import matplotlib.pyplot as plt
+            plt.clf()
+            for temp_population in temp_populations:
+                temp_population[0].print()
+            plt.show(block=False)
+            plt.pause(interval=0.001)
+                
+                
