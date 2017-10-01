@@ -28,32 +28,37 @@ if __name__ == '__main__':
     # data_file = 'cities_wsahara.json'
     # data_file = 'cities280.json'
     data_file = 'vlsi131.json'
+    # start_point = 60
     cities = get_cities(data_file)
-    order = get_order(cities, 0)
-    
-    if advanced:
-        nexts = []
-        for i, o in enumerate(order):
-            if i == 0:
-                nexts.append(-1)
-                continue
-            ns = get_order(cities, o)
-            # print(o, ns)
-            for n in ns:
-                if n in order[:i]:
-                    nexts.append(n)
-                    break
-            
-            # for n in ns:
-                # if n not in order[:i+1]:
-                    # nexts.append(n)
-                    # break
-    
-    # print(order)
-    # print(nexts)
-    # print(len(order))
-    # print(len(nexts))
-    
-    l = [[a,b] for (a,b) in zip(order, nexts)]
-    print(l)
+    output = {}
+    for start_point in range(len(cities)):
+        order = get_order(cities, start_point)
+        
+        if advanced:
+            nexts = []
+            for i, o in enumerate(order):
+                if i == 0:
+                    nexts.append(-1)
+                    continue
+                ns = get_order(cities, o)
+                # print(o, ns)
+                for n in ns:
+                    if n in order[:i]:
+                        nexts.append(n)
+                        break
+                
+                # for n in ns:
+                    # if n not in order[:i+1]:
+                        # nexts.append(n)
+                        # break
+        
+        # print(order)
+        # print(nexts)
+        # print(len(order))
+        # print(len(nexts))
+        
+        l = [[a,b] for (a,b) in zip(order, nexts)]
+        output[str(start_point)] = l
+    # print(l)
+    print(repr(output).replace("'", '"'))
     

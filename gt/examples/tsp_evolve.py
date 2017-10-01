@@ -12,6 +12,7 @@ class TSPEvolve(object):
         # self.config.read(config_file)
         self.config = config
         self.const_data = const_data
+        self.start_point = '0'
         
         if const_data is None:
             self.data_file = self.config.get('problem', 'data_file')
@@ -21,11 +22,12 @@ class TSPEvolve(object):
                 
             self.order_file = self.config.get('problem', 'order_file')
             with open(self.order_file, 'r') as f:
-                self.order = json.loads(f.read())
+                self.order = json.loads(f.read())[self.start_point]
         else:
             self.cities = const_data['cities']
             # self.size = len(self.cities)
             self.order = const_data['order']
+            self.start_point = const_data['start_point']
             
         self.mutation_prob = self.config.getint('individual', 'mutation_probability')
         
