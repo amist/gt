@@ -62,7 +62,8 @@ class Runner(object):
                             print('Generation: {:2}: Chromosome Size: {}, Partial Fitness: {:3}'.format(i, self.population.get_best().size, self.population.get_best().get_fitness()), file=sys.stderr)
                             self.logger.info('Generation: {:2}: Chromosome Size: {}, Partial Fitness: {:3}'.format(i, self.population.get_best().size, self.population.get_best().get_fitness()))
                     if self.output_mode == 'graphic' or self.output_mode == 'console':
-                        self.population.get_best().print()
+                        self.population.print_best()
+                        # self.population.get_best().print()
                         self.logger.info(self.population.get_best().chromosome)
                     elif self.output_mode == 'json':
                         generation = [x.get_solution() for x in self.population.population]

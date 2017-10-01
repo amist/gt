@@ -98,7 +98,7 @@ class SimplePopulation(BasePopulation):
                 fitnesses = [1 + max_fitness - x for x in fitnesses]
                 parent1, parent2 = random.choices(self.population, weights=fitnesses, k=2)
             elif self.expansion_type == 'different':
-                k = 5
+                k = 3
                 fitnesses = [x.get_fitness() for x in self.population]
                 max_fitness = max(fitnesses)
                 fitnesses = [1 + max_fitness - x for x in fitnesses]
@@ -206,6 +206,9 @@ class SimplePopulation(BasePopulation):
             # order = []
             # for individual in population:
                 # individual.sort_chromosome(order)
+                
+    def print_best(self):
+        self.population[0].print()
 
     def get_best(self):
         return self.population[0]
@@ -260,14 +263,66 @@ class TypesPopulation(BasePopulation):
         return self.population[0]
 
         
-class TspPopulation(SimplePopulation):
-    def __init__(self, individual, config_file='test.config'):
-        SimplePopulation.__init__(self, individual=individual, config_file=config_file)
+class TspPopulation(BasePopulation):
+    def __init__(self, individual, config_file):
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        
+        self.individual_class = individual
+        
+        self.size = config.getint('population', 'size')
+        self.expansion_factor = config.getint('population', 'expansion_factor')
+        self.expansion_type = config.get('population', 'expansion_type')
+        
+        self.evolution_type = config.get('population', 'evolution_type')
+        
+        self.config_mode = config.get('runner', 'config_mode')
+        if self.config_mode == 'file':
+            self.population = [individual(config_file=config_file) for _ in range(self.size)]
+        elif self.config_mode == 'object':
+            self.population = [individual(config=config) for _ in range(self.size)]
+        self.generation = 0
         
         
+    def expand_population(self):
+        for xx in range(self.expansion_factor * len(self.population)):
+            fitnesses = [x.get_fitness() for x in self.population]
+            max_fitness = max(fitnesses)
+            fitnesses = [1 + max_fitness - x for x in fitnesses]
+            
+            # TODO: choose according to type
+            try:
+                parent1, parent2 = random.choices(self.population, weights=fitnesses, k=2)
+            except IndexError:
+                print(len(self.population))
+                raise IndexError
+                
+            child = parent1.get_child(parent2)
+                
+            self.population.append(child)
+            
+            
     def process_generation(self):
-        ret = SimplePopulation.process_generation(self)
-        if ret == 'convergence':
-            print('population converged. working on mutations solely')
-            for individual in self.population:
-                self.mutation_prob = 0
+        self.expand_population()
+        
+        map(lambda x: x.mutate(), self.population[self.size:])
+        
+        # TODO: sort according to type
+        self.population.sort(key=lambda x: x.get_fitness(self.generation), reverse=False)
+        self.population = self.population[:self.size]
+        
+        self.generation += 1
+        if self.population[0].chromosome == self.population[-1].chromosome:
+            return 'convergence'
+            
+        # TODO: check for merging two types
+            
+            
+    # TODO: add print function
+    
+    
+    def get_best(self):
+        return self.population[0]
+        
+    def print_best(self):
+        self.population[0].print()
