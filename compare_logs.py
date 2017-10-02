@@ -4,9 +4,9 @@ import re
 from gt.examples.tsp import TSP
 import scipy.stats
 
-# dataset = 'wsahara'
+dataset = 'wsahara'
 # dataset = 'djibouti'
-dataset = 'qatar'
+# dataset = 'qatar'
 
 def get_xssyss(log):
     xss = []
@@ -50,7 +50,7 @@ def stat_run(xs, ys):
     elif dataset == 'qatar':
         optimal = 9352
     for x, y in zip(xs, ys):
-        if y < 1.1 * optimal:
+        if y < 1.001 * optimal:
             return x
     return None
     
@@ -68,6 +68,19 @@ def print_stats(samp1, samp2):
             print(f'Second is more. statistic={s}, pvalue={p}')
         else:
             print(f'Both are the same. statistic={s}, pvalue={p}')
+    
+    
+def search_for_windows(samp1, samp2):
+    # print('here')
+    window_size = 10
+    size = min(len(samp1), len(samp2))
+    # print(size)
+    # print(samp1)
+    for i in range(size - window_size + 1):
+        # print(i)
+        s1 = samp1[i:i+window_size]
+        s2 = samp2[i:i+window_size]
+        print_stats(s1, s2)
     
     
 def stats(logs):
@@ -102,6 +115,7 @@ def stats(logs):
     print('== for number of generations ==')
     print_stats(gens[0], gens[1])
     # print(scipy.stats.ttest_ind(gens[0], gens[1]))
+    search_for_windows(gens[0], gens[1])
     
     
 def analyze(logs):
@@ -118,15 +132,26 @@ if __name__ == '__main__':
             # 'diff.log',
             # 'wsahara_weight.log',
             # 'wsahara_diff.log',
-            'weight_100.log',
-            'diff_100.log',
+            # 'weight_100.log',
+            # 'diff_100.log',
+            # 'archive/wsahara_weight_100.log',
+            # 'archive/wsahara_diff_100.log',
+            # 'wsahara_diff_20.log',
+            # 'wsahara_wdiff_k5_20.log',
+            # 'wsahara_wdiff_k3_20.log',
+            # 'wsahara_weight_20.log',
+            'wsahara_wdiff_k3_150.log',
+            'wsahara_weight_150.log',
             ])
     elif dataset == 'djibouti':
         analyze([
             # 'djib_unif_100.log',
             # 'djib_weight_100.log',
             # 'djib_diff_100.log',
+            # 'djibouti_weight_20.log',
+            # 'djibouti_diff_20.log',
+            # 'djibouti_diff_20.log',
             'djibouti_weight_20.log',
-            'djibouti_diff_20.log',
+            'djibouti_factorweight_10_20.log',
             ])
         

@@ -7,7 +7,7 @@ import configparser
 class TSPMultiple(object):
     config = configparser.ConfigParser()
     
-    def __init__(self, config, start_point_ratio, const_data=None):
+    def __init__(self, config, start_point_ratio=0, const_data=None):
         self.config = config
         self.const_data = const_data
         
@@ -23,12 +23,17 @@ class TSPMultiple(object):
             self.cities = const_data['cities']
             self.order = const_data['order']
             
-        self.start_point_ratio = start_point_ratio
-        self.start_point = str(int((len(self.cities)-1) * start_point_ratio))
+        try:
+            self.start_point = self.config.getint('individual', 'start_point')
+            self.start_point_ratio = self.start_point // (len(self.cities)-1)
+            self.start_point = str(self.start_point)
+        except configparser.NoOptionError:
+            self.start_point_ratio = start_point_ratio
+            self.start_point = str(int((len(self.cities)-1) * start_point_ratio))
             
         self.mutation_prob = self.config.getint('individual', 'mutation_probability')
         
-        self.size = 4
+        self.size = self.config.getint('individual', 'size')
         self.chromosome = [x[0] for x in self.order[self.start_point][:self.size]]
         random.shuffle(self.chromosome)
         # print(self.chromosome)
@@ -184,10 +189,12 @@ class TSPMultiple(object):
 
 
     def print(self):
+        self_print = True       # false when print is handles by population (since this is only part of the solution)
         if self.output_mode == 'graphic':
             import matplotlib.pyplot as plt
-            # plt.clf()
-            # plt.suptitle('fitness = {}'.format(self.get_fitness()))
+            if self_print:
+                plt.clf()
+                plt.suptitle('fitness = {}'.format(self.get_fitness()))
             for city in self.cities:
                 x, y = self.cities[city]
                 plt.plot(x, y, '.', color='b')
@@ -198,8 +205,9 @@ class TSPMultiple(object):
             x1, y1 = self.cities[self.city_index_by_order(0)]
             x2, y2 = self.cities[self.city_index_by_order(self.size-1)]
             plt.plot([x1, x2], [y1, y2], color='k')
-            # plt.show(block=False)
-            # plt.pause(interval=0.001)
+            if self_print:
+                plt.show(block=False)
+                plt.pause(interval=0.001)
         elif self.output_mode == 'console':
             print(self.chromosome)
         

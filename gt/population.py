@@ -24,9 +24,12 @@ class BasePopulation(object):
 
 
 class SimplePopulation(BasePopulation):
-    def __init__(self, individual, config_file):
+    def __init__(self, individual, config_file=None, config_string=None):
         config = configparser.ConfigParser()
-        config.read(config_file)
+        if config_file is not None:
+            config.read(config_file)
+        else:
+            config.read_string(config_string)
         
         self.individual_class = individual
         self.config_file = config_file

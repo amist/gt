@@ -4,7 +4,7 @@ import json
 import matplotlib.pyplot as plt
 
 cities_file = ''
-log_file = 'logs/logfile_2017-10-01_16.48.43.330734.log'
+log_file = 'logs/mult_1600.log'
 
 def get_cities(log_file):
     cities_file = ''
@@ -98,7 +98,7 @@ def create_images(log_file):
     for row in rows:
         generation, fitness, chromosomes = row
         create_frame(cities, generation, fitness, chromosomes)
-        plt.savefig(os.path.join(log_dir, '{:03d}.png'.format(generation)))
+        plt.savefig(os.path.join(log_dir, '{:04d}.png'.format(generation)))
     
     
 if __name__ == '__main__':

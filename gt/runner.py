@@ -7,9 +7,12 @@ import logging
 import datetime
 
 class Runner(object):
-    def __init__(self, config_file):
+    def __init__(self, config_file=None, config_string=None):
         config = configparser.ConfigParser()
-        config.read(config_file)
+        if config_file is not None:
+            config.read(config_file)
+        else:
+            config.read_string(config_string)
         
         self.logger = logging.getLogger('result')
         self.logger.setLevel(logging.DEBUG)
@@ -35,12 +38,20 @@ class Runner(object):
         m = __import__(package_name, globals(), locals(), class_name)
         individual = getattr(m, class_name)
 
-        if self.population_type == 'SimplePopulation':
-            self.population = SimplePopulation(individual=individual, config_file=config_file)
-        elif self.population_type == 'TypesPopulation':
-            self.population = TypesPopulation(individual=individual, config_file=config_file)
-        elif self.population_type == 'TspPopulation':
-            self.population = TspPopulation(individual=individual, config_file=config_file)
+        if config_file is not None:
+            if self.population_type == 'SimplePopulation':
+                self.population = SimplePopulation(individual=individual, config_file=config_file)
+            elif self.population_type == 'TypesPopulation':
+                self.population = TypesPopulation(individual=individual, config_file=config_file)
+            elif self.population_type == 'TspPopulation':
+                self.population = TspPopulation(individual=individual, config_file=config_file)
+        else:
+            if self.population_type == 'SimplePopulation':
+                self.population = SimplePopulation(individual=individual, config_string=config_string)
+            elif self.population_type == 'TypesPopulation':
+                self.population = TypesPopulation(individual=individual, config_string=config_string)
+            elif self.population_type == 'TspPopulation':
+                self.population = TspPopulation(individual=individual, config_string=config_string)
 
     def get_solution(self):
         json_output = {
