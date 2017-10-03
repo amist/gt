@@ -4,7 +4,8 @@ import json
 import matplotlib.pyplot as plt
 
 cities_file = ''
-log_file = 'logs/evolve_vlsi131_60_1.log'
+# log_file = 'logs/evolve_vlsi131_60_1.log'
+log_file = 'logs/temp.log'
 
 def get_cities(log_file):
     cities_file = ''

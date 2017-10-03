@@ -4,6 +4,9 @@ import json
 import copy
 import configparser
 import random
+import logging
+import datetime
+from gt.examples.tsp import TSP
 
 
 class BasePopulation(object):
@@ -444,3 +447,91 @@ class TspPopulation(BasePopulation):
             plt.pause(interval=0.001)
             
             
+class MergerPopulation(BasePopulation):
+    def __init__(self, individual_util):
+        self.size = 100
+        self.expansion_factor = 5
+        self.partials_population = []
+        self.iu = individual_util
+        self.generations_number = 10
+        
+        self.population = None
+        
+        self.logger = logging.getLogger('result')
+        self.logger.setLevel(logging.DEBUG)
+        fileh = logging.FileHandler('logs/logfile_{}.log'.format(str(datetime.datetime.now()).replace(' ', '_').replace(':', '.')))
+        formatter = logging.Formatter('%(message)s')
+        fileh.setFormatter(formatter)
+        self.logger.addHandler(fileh) 
+        
+        
+    def initialize_process(self, config_string):
+        self.config_string = config_string
+        # self.logger.info('merger population run')
+        # self.logger.info(self.partials_population)
+        self.logger.info(config_string)
+        self.logger.info('---')
+        
+        
+    def run_merged(self, p1, p2):
+        population = SimplePopulation(TSP, config_string=self.config_string)
+        population.population = []
+        for _ in range(self.size):
+            new = self.iu.merge(p1, p2)
+            try:
+                assert len(new) == len(set(new))
+            except AssertionError:
+                print(new)
+            tsp = TSP(config_string=self.config_string)
+            tsp.chromosome = new
+            tsp.size = len(new)
+            population.population.append(tsp)
+        population.size = len(population.population)
+        
+        for ind in population.population:
+            try:
+                assert len(ind.chromosome) == len(set(ind.chromosome))
+            except AssertionError:
+                print(ind.chromosome)
+        
+        # population.print_best()
+        for i in range(self.generations_number):
+            population.process_generation()
+            ch = population.population[0].chromosome
+            
+            print('Generation: {:2}: Chromosome Size: {}, Partial Fitness: {:3}'.format(i, len(ch), population.get_best().get_fitness()), file=sys.stderr)
+            self.logger.info('Generation: {:2}: Chromosome Size: {}, Partial Fitness: {:3}'.format(i, len(ch), population.get_best().get_fitness()))
+            
+            # Generation: 1600: Best Fitness: 770.5590142921287
+            # population.print_best()
+            self.logger.info([ch])
+        return population.population[0].chromosome
+        
+        
+    def merge_partials(self):
+        for partial in self.partials_population:
+            assert len(partial) == len(set(partial))
+        print(len(self.partials_population))
+        while len(self.partials_population) > 1:
+            [a, b] = self.iu.pick_merge(self.partials_population)
+            a, b = max(a,b), min(a,b)       # ensure the higher index is being popped first
+            p1 = self.partials_population.pop(a)
+            p2 = self.partials_population.pop(b)
+            # print('two news')
+            # new = self.iu.merge(p1, p2)
+            # print(new)
+            # new = self.iu.merge(p1, p2)
+            # print(new)
+            
+            # with 
+            # print(self.config_string)
+            # config = configparser.ConfigParser()
+            # config.read_string(config_string)
+            
+            res = self.run_merged(p1, p2)
+            assert len(res) == len(set(res))
+            self.partials_population.append(res)
+            print(len(self.partials_population))
+            print(self.partials_population)
+        
+        

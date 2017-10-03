@@ -7,9 +7,15 @@ import configparser
 class TSP(object):
     config = configparser.ConfigParser()
     
-    def __init__(self, config_file):
-        self.config_file = config_file
-        self.config.read(config_file)
+    def __init__(self, config_file=None, config_string=None, config=None):
+        if config_file is not None:
+            self.config_file = config_file
+            self.config.read(config_file)
+        elif config_string is not None:
+            self.config_file = config_file
+            self.config.read_string(config_string)
+        else:
+            self.config = config
         self.mutation_prob = self.config.getint('individual', 'mutation_probability')
         
         self.data_file = self.config.get('problem', 'data_file')
@@ -88,7 +94,13 @@ class TSP(object):
         
     def city_index_by_order(self, i):
         if self.chromosome_type == 'a':
-            return str(self.chromosome[i])
+            try:
+                return str(self.chromosome[i])
+            except IndexError:
+                print(self.chromosome)
+                print(len(self.chromosome))
+                print(i)
+                raise IndexError
         elif self.chromosome_type == 'b':
             for city, order in self.chromosome:
                 if order == i:
@@ -173,7 +185,12 @@ class TSP(object):
 
 
     def get_child(self, other):
-        child = TSP(config_file=self.config_file)
+        if self.config_file is not None:
+            child = TSP(config_file=self.config_file)
+        else:       # for merger population
+            child = TSP(config=self.config)
+            child.config_file = None
+            child.size = self.size
         if self.chromosome_type == 'a':
             if self.smart_crossover:
                 i = other.chromosome.index(self.chromosome[0])
@@ -409,7 +426,7 @@ class TSP(object):
             plt.suptitle('fitness = {}'.format(self.get_fitness()))
             for city in self.cities:
                 x, y = self.cities[city]
-                plt.plot(x, y, '*', color='b')
+                plt.plot(x, y, '.', color='b')
             for i in range(1, self.size):
                 x1, y1 = self.cities[self.city_index_by_order(i-1)]
                 x2, y2 = self.cities[self.city_index_by_order(i)]
@@ -424,7 +441,7 @@ class TSP(object):
                     plt.plot([x1, x2], [y1, y2], color='k')
             x1, y1 = self.cities[self.city_index_by_order(0)]
             x2, y2 = self.cities[self.city_index_by_order(self.size-1)]
-            plt.plot([x1, x2], [y1, y2], color='y')
+            plt.plot([x1, x2], [y1, y2], color='k')
             plt.show(block=False)
             plt.pause(interval=0.001)
         elif self.output_mode == 'console':
