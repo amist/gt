@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 cities_file = ''
 # log_file = 'logs/mult_1600.log'
-log_file = 'logs/temp.log'
+log_file = 'logs/logfile_2017-10-03_22.19.55.491657.log'
 
 def get_cities(log_file):
     cities_file = ''
@@ -28,7 +28,7 @@ def create_frame(cities, generation, fitness, chromosomes):
     plt.suptitle('generation = {}, fitness = {:.2f}'.format(generation, fitness))
     for city in cities:
         x, y = cities[city]
-        plt.plot(x, y, '*', color='b')
+        plt.plot(x, y, '.', color='b')
     for chromosome in chromosomes:
         for i in range(1, len(chromosome)):
             x1, y1 = cities[chromosome[i-1]]
@@ -44,6 +44,8 @@ def create_frame(cities, generation, fitness, chromosomes):
 def get_rows(log_file):
     rows = []
     generation = fitness = chromosomes = None
+    prev_generation = -1
+    prefix = 0
     
     with open(log_file, 'r') as f:
         for line in f:
@@ -66,6 +68,9 @@ def get_rows(log_file):
                     m = re.search('Generation:\W*(\d+): Chromosome Size: (\d+), Partial Fitness: (\d+.\d+)', line)
                     if m:
                         generation = int(m.group(1))
+                        if generation <= prev_generation:
+                            prefix += 1
+                        prev_generation = generation
                         fitness = float(m.group(3))
                         # print('partial', generation, fitness)
             elif line.startswith('['):
@@ -77,7 +82,7 @@ def get_rows(log_file):
                 # print(chromosome)
                 
             if generation is not None and fitness is not None and chromosomes is not None:
-                rows.append((generation, fitness, chromosomes))
+                rows.append((prefix, generation, fitness, chromosomes))
                 generation = fitness = chromosomes = None
                 
     return rows
@@ -96,10 +101,12 @@ def create_images(log_file):
     log_dir = os.path.join(base_dir, log_dir)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    for row in rows:
-        generation, fitness, chromosomes = row
+    total_rows = len(rows)
+    for i, row in enumerate(rows):
+        prefix, generation, fitness, chromosomes = row
         create_frame(cities, generation, fitness, chromosomes)
-        plt.savefig(os.path.join(log_dir, '{:04d}.png'.format(generation)))
+        plt.savefig(os.path.join(log_dir, '{:06d}.png'.format(i)))
+        print('Finished {}/{}'.format(i+1, total_rows), end='       \r')
     
     
 if __name__ == '__main__':

@@ -452,8 +452,9 @@ class MergerPopulation(BasePopulation):
         self.size = 100
         self.expansion_factor = 5
         self.partials_population = []
+        self.partials_size = 0
         self.iu = individual_util
-        self.generations_number = 10
+        self.generations_number = 200
         
         self.population = None
         
@@ -469,6 +470,7 @@ class MergerPopulation(BasePopulation):
         self.config_string = config_string
         # self.logger.info('merger population run')
         # self.logger.info(self.partials_population)
+        self.partials_size = len(set([item for sublist in self.partials_population for item in sublist]))
         self.logger.info(config_string)
         self.logger.info('---')
         
@@ -505,6 +507,9 @@ class MergerPopulation(BasePopulation):
             # Generation: 1600: Best Fitness: 770.5590142921287
             # population.print_best()
             self.logger.info([ch])
+            if population.population[0].chromosome == population.population[-1].chromosome:
+                print('Converged. Breaking')
+                break
         return population.population[0].chromosome
         
         
@@ -531,6 +536,13 @@ class MergerPopulation(BasePopulation):
             res = self.run_merged(p1, p2)
             assert len(res) == len(set(res))
             self.partials_population.append(res)
+            try:
+                assert len(set([item for sublist in self.partials_population for item in sublist])) == self.partials_size
+            except AssertionError:
+                print(p1)
+                print(p2)
+                print(res)
+                raise AssertionError
             print(len(self.partials_population))
             print(self.partials_population)
         

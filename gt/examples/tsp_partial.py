@@ -135,8 +135,12 @@ class TSPPartial(object):
         seen_add = seen.add
         # print(build)
         build = [x for x in build if not (x in seen or seen_add(x))]
+        # print('build 2')
         # print(build)
         return [build]
+        assert False
+        
+        
         # print('in merge pieces')
         # print('p1, p2:', p1, p2)
         p1 = [x if x[0] < x[-1] else x[::-1] for x in p1]
@@ -208,6 +212,11 @@ class TSPPartial(object):
     def pieces_to_list(self, ps):
         # print('pieces to list')
         # print('ps:', ps)
+        
+        return ps[0]
+        assert False        # code below was before assuming ps is one piece
+        
+        
         ls = []
         p = ps.pop()        # can also be ps.pop(0)
         next_node = p[0]
@@ -242,6 +251,24 @@ class TSPPartial(object):
         
         
     def merge(self, c1, c2):
+        max_len = max(len(c1), len(c2))
+        if max_len > 0.9 * len(self.cities):
+            if len(c2) > len(c1):
+                c1, c2 = c2, c1
+                
+            # make sure c2 starts with element which is also in c1
+            exists = (set(c1) & set(c2)).pop()
+            index = c2.index(exists)
+            c2 = c2[index:] + c2[:index]
+            missing = [x for x in c2 if x not in c1]
+            # insert the missing according to their order at c2
+            for m in missing:
+                before = c2[c2.index(m)-1]
+                index = c1.index(before)
+                c1.insert(index, m)
+                
+            # TODO: add random for diversity
+            return c1
         # print('in merge')
         # print(c1, c2)
         shared_set = set(c1) & set(c2)
@@ -279,7 +306,7 @@ class TSPPartial(object):
             # print('indexes:', indexes1, indexes2)
             pieces1 = self.list_to_pieces(shared, c1)
             pieces2 = self.list_to_pieces(shared, c2)
-            # print(pieces1, pieces2)
+            # print('pieces1, pieces2:', pieces1, pieces2)
             # print('shared:', shared)
             try:
                 merged = self.merge_pieces(pieces1, pieces2)
