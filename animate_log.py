@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 cities_file = ''
 # log_file = 'logs/evolve_vlsi131_60_1.log'
-log_file = 'logs/temp.log'
+log_file = 'logs/logfile_2017-10-23_19.31.35.263855.log'
 
 def get_cities(log_file):
     cities_file = ''
@@ -28,7 +28,7 @@ def create_frame(cities, generation, fitness, chromosome):
     plt.suptitle('generation = {}, fitness = {:.2f}'.format(generation, fitness))
     for city in cities:
         x, y = cities[city]
-        plt.plot(x, y, '*', color='b')
+        plt.plot(x, y, '.', color='b')
     for i in range(1, len(chromosome)):
         x1, y1 = cities[chromosome[i-1]]
         x2, y2 = cities[chromosome[i]]
@@ -98,7 +98,7 @@ def create_images(log_file):
     for row in rows:
         generation, fitness, chromosome = row
         create_frame(cities, generation, fitness, chromosome)
-        plt.savefig(os.path.join(log_dir, '{:03d}.png'.format(generation)))
+        plt.savefig(os.path.join(log_dir, '{:06d}.png'.format(generation)))
     
     
 if __name__ == '__main__':

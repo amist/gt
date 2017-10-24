@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 cities_file = ''
 # log_file = 'logs/mult_1600.log'
-log_file = 'logs/logfile_2017-10-03_22.19.55.491657.log'
+# log_file = 'logs/logfile_2017-10-03_22.19.55.491657.log'    # first YouTube example
+log_file = 'logs/logfile_2017-10-23_19.31.35.263855.log'
 
 def get_cities(log_file):
     cities_file = ''
