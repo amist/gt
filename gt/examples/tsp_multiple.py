@@ -1,4 +1,5 @@
 import os
+import gc
 import math
 import json
 import random
@@ -7,34 +8,45 @@ import configparser
 class TSPMultiple(object):
     config = configparser.ConfigParser()
     
+    cities = None
+    order = None
+    
     def __init__(self, config, start_point_ratio=0, const_data=None):
         self.config = config
         self.const_data = const_data
         
         if const_data is None:
-            self.data_file = self.config.get('problem', 'data_file')
-            with open(self.data_file, 'r') as f:
-                self.cities = json.loads(f.read())
+            if TSPMultiple.cities is None:
+                self.data_file = self.config.get('problem', 'data_file')
+                with open(self.data_file, 'r') as f:
+                    TSPMultiple.cities = json.loads(f.read())
                 
-            self.order_file = self.config.get('problem', 'order_file')
-            with open(self.order_file, 'r') as f:
-                self.order = json.loads(f.read())
+            if TSPMultiple.order is None:
+                self.order_file = self.config.get('problem', 'order_file')
+                with open(self.order_file, 'r') as f:
+                    TSPMultiple.order = json.loads(f.read())
+                    # self.temp_order = json.loads(f.read())
+                    # self.order = {}
+                    # for city in self.cities.keys():
+                        # self.order[city] = self.temp_order[city]
+                    # del self.temp_order
+                    # gc.collect()
         else:
-            self.cities = const_data['cities']
-            self.order = const_data['order']
+            TSPMultiple.cities = const_data['cities']
+            TSPMultiple.order = const_data['order']
             
         try:
             self.start_point = self.config.getint('individual', 'start_point')
-            self.start_point_ratio = self.start_point // (len(self.cities)-1)
+            self.start_point_ratio = self.start_point // (len(TSPMultiple.cities)-1)
             self.start_point = str(self.start_point)
         except configparser.NoOptionError:
             self.start_point_ratio = start_point_ratio
-            self.start_point = str(int((len(self.cities)-1) * start_point_ratio))
+            self.start_point = str(int((len(TSPMultiple.cities)-1) * start_point_ratio))
             
         self.mutation_prob = self.config.getint('individual', 'mutation_probability')
         
         self.size = self.config.getint('individual', 'size')
-        self.chromosome = [x[0] for x in self.order[self.start_point][:self.size]]
+        self.chromosome = [x[0] for x in TSPMultiple.order[self.start_point][:self.size]]
         random.shuffle(self.chromosome)
         # print(self.chromosome)
 
@@ -44,27 +56,27 @@ class TSPMultiple(object):
         
         
     def expand_chromosome(self):
-        if len(self.chromosome) == len(self.cities):
+        if len(self.chromosome) == len(TSPMultiple.cities):
             return True
         # print(self.chromosome)
         # n = self.order[self.start_point][self.size][0]      # that's the old calculation, but with merges it doesn't necessarily need to be the size-th element
         to_add = -1
-        for i in range(len(self.cities)):
-            n = self.order[self.start_point][i][0]
+        for i in range(len(TSPMultiple.cities)):
+            n = TSPMultiple.order[self.start_point][i][0]
             if n not in self.chromosome:
                 to_add = i
                 break
         # print(n)
         try:
             # after = self.order[self.start_point][self.size][1]  # the old code
-            after = self.order[self.start_point][to_add][1]
+            after = TSPMultiple.order[self.start_point][to_add][1]
             index = self.chromosome.index(after)
         except ValueError:
             print(self.chromosome)
             print(len(self.chromosome))
             print(self.size)
             print(self.start_point)
-            print(self.order[self.start_point])
+            print(TSPMultiple.order[self.start_point])
             print(n)
             raise ValueError
             
@@ -112,8 +124,8 @@ class TSPMultiple(object):
         if self.fitness is None:
             dist = 0
             for i in range(self.size):
-                x1, y1 = self.cities[str(self.chromosome[i-1])]
-                x2, y2 = self.cities[str(self.chromosome[i])]
+                x1, y1 = TSPMultiple.cities[str(self.chromosome[i-1])]
+                x2, y2 = TSPMultiple.cities[str(self.chromosome[i])]
                 dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
             self.fitness = dist
             
@@ -195,15 +207,15 @@ class TSPMultiple(object):
             if self_print:
                 plt.clf()
                 plt.suptitle('fitness = {}'.format(self.get_fitness()))
-            for city in self.cities:
-                x, y = self.cities[city]
+            for city in TSPMultiple.cities:
+                x, y = TSPMultiple.cities[city]
                 plt.plot(x, y, '.', color='b')
             for i in range(1, self.size):
-                x1, y1 = self.cities[self.city_index_by_order(i-1)]
-                x2, y2 = self.cities[self.city_index_by_order(i)]
+                x1, y1 = TSPMultiple.cities[self.city_index_by_order(i-1)]
+                x2, y2 = TSPMultiple.cities[self.city_index_by_order(i)]
                 plt.plot([x1, x2], [y1, y2], color='k')
-            x1, y1 = self.cities[self.city_index_by_order(0)]
-            x2, y2 = self.cities[self.city_index_by_order(self.size-1)]
+            x1, y1 = TSPMultiple.cities[self.city_index_by_order(0)]
+            x2, y2 = TSPMultiple.cities[self.city_index_by_order(self.size-1)]
             plt.plot([x1, x2], [y1, y2], color='k')
             if self_print:
                 plt.show(block=False)

@@ -7,6 +7,9 @@ import configparser
 class TSP(object):
     config = configparser.ConfigParser()
     
+    cities = None
+    order = None
+    
     def __init__(self, config_file=None, config_string=None, config=None):
         if config_file is not None:
             self.config_file = config_file
@@ -18,14 +21,16 @@ class TSP(object):
             self.config = config
         self.mutation_prob = self.config.getint('individual', 'mutation_probability')
         
-        self.data_file = self.config.get('problem', 'data_file')
-        with open(self.data_file, 'r') as f:
-            self.cities = json.loads(f.read())
-            self.size = len(self.cities)
+        if TSP.cities is None:
+            self.data_file = self.config.get('problem', 'data_file')
+            with open(self.data_file, 'r') as f:
+                TSP.cities = json.loads(f.read())
+        self.size = len(TSP.cities)
             
-        self.order_file = self.config.get('problem', 'order_file')
-        with open(self.order_file, 'r') as f:
-            self.order = json.loads(f.read())
+        if TSP.order is None:
+            self.order_file = self.config.get('problem', 'order_file')
+            with open(self.order_file, 'r') as f:
+                TSP.order = json.loads(f.read())
             
         self.evolution_type = self.config.get('individual', 'evolution_type')
         self.up_to = self.size      # the point in route up to which the fitness is calculated
@@ -119,8 +124,8 @@ class TSP(object):
                 prev_index = self.city_index_by_order(self.size-1)
                 for i in range(self.size):
                     cur_index = self.city_index_by_order(i)
-                    x1, y1 = self.cities[prev_index]
-                    x2, y2 = self.cities[cur_index]
+                    x1, y1 = TSP.cities[prev_index]
+                    x2, y2 = TSP.cities[cur_index]
                     dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
                     prev_index = cur_index
                 
@@ -139,7 +144,7 @@ class TSP(object):
                 # assert route[0] == self.evolution_start
                 # assert self.order[0] == self.evolution_start
                 self.up_to = min(self.size, 2 + generation // self.generations_evolution_step)     # check only part of the route
-                max_index = max([route.index(x) for x in self.order[:self.up_to]])
+                max_index = max([route.index(x) for x in TSP.order[:self.up_to]])
                 
                 junk = [x for x in self.chromosome if x not in route]
                 random.shuffle(junk)
@@ -156,8 +161,8 @@ class TSP(object):
                 prev_index = self.city_index_by_order(self.up_to-1)
                 for i in range(max_index):
                     cur_index = self.city_index_by_order(i)
-                    x1, y1 = self.cities[prev_index]
-                    x2, y2 = self.cities[cur_index]
+                    x1, y1 = TSP.cities[prev_index]
+                    x2, y2 = TSP.cities[cur_index]
                     dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
                     prev_index = cur_index
                 
@@ -224,10 +229,10 @@ class TSP(object):
                 child.chromosome = self.chromosome[:partition]
                 child.chromosome += [x for x in other_chromosome if x not in child.chromosome]
             elif self.evolution_type == 'progressive':
-                self_real = [x for x in self.chromosome if x in self.order[:self.up_to]]
+                self_real = [x for x in self.chromosome if x in TSP.order[:self.up_to]]
                 # print(self.up_to)
                 # print(self_real)
-                other_real = [x for x in other.chromosome if x in self.order[:self.up_to]]
+                other_real = [x for x in other.chromosome if x in TSP.order[:self.up_to]]
                 try:
                     assert len(self_real) == len(other_real)
                 except AssertionError:
@@ -351,8 +356,8 @@ class TSP(object):
                     a_index = random.randint(0, self.size-1)
                     b_index = random.randint(0, self.size-1)
                 elif self.evolution_type == 'progressive':
-                    a_index = self.chromosome.index(random.choice(self.order[:self.up_to]))
-                    b_index = self.chromosome.index(random.choice(self.order[:self.up_to]))
+                    a_index = self.chromosome.index(random.choice(TSP.order[:self.up_to]))
+                    b_index = self.chromosome.index(random.choice(TSP.order[:self.up_to]))
                 if a_index > b_index:
                     a_index, b_index = b_index, a_index
                 if random.randint(0,1) == 0:
@@ -370,13 +375,13 @@ class TSP(object):
                 a_index = random.randint(0, self.size-1)
                 if self.cities_matrix is None:
                     self.cities_matrix = []
-                    for i1 in self.cities:
+                    for i1 in TSP.cities:
                         row = []
-                        for i2 in self.cities:
-                            x1 = self.cities[i1][0]
-                            y1 = self.cities[i1][1]
-                            x2 = self.cities[i2][0]
-                            y2 = self.cities[i2][1]
+                        for i2 in TSP.cities:
+                            x1 = TSP.cities[i1][0]
+                            y1 = TSP.cities[i1][1]
+                            x2 = TSP.cities[i2][0]
+                            y2 = TSP.cities[i2][1]
                             row.append(math.sqrt((x1-x2)**2 + (y1-y2)**2))
                         self.cities_matrix.append(row)
                 choice_list = self.cities_matrix[a_index]
@@ -424,23 +429,23 @@ class TSP(object):
             import matplotlib.pyplot as plt
             plt.clf()
             plt.suptitle('fitness = {}'.format(self.get_fitness()))
-            for city in self.cities:
-                x, y = self.cities[city]
+            for city in TSP.cities:
+                x, y = TSP.cities[city]
                 plt.plot(x, y, '.', color='b')
             for i in range(1, self.size):
-                x1, y1 = self.cities[self.city_index_by_order(i-1)]
-                x2, y2 = self.cities[self.city_index_by_order(i)]
+                x1, y1 = TSP.cities[self.city_index_by_order(i-1)]
+                x2, y2 = TSP.cities[self.city_index_by_order(i)]
                 # plt.arrow(x1, y1, x2-x1, y2-y1, head_width=0.05, head_length=0.1, fc='k', ec='k')
                 if self.evolution_type == 'progressive':
-                    if int(self.city_index_by_order(i)) in self.order[:self.up_to]:
+                    if int(self.city_index_by_order(i)) in TSP.order[:self.up_to]:
                         plt.plot([x1, x2], [y1, y2], color='k')
                     else:
                         ...
                         # plt.plot([x1, x2], [y1, y2], color='y')
                 else:
                     plt.plot([x1, x2], [y1, y2], color='k')
-            x1, y1 = self.cities[self.city_index_by_order(0)]
-            x2, y2 = self.cities[self.city_index_by_order(self.size-1)]
+            x1, y1 = TSP.cities[self.city_index_by_order(0)]
+            x2, y2 = TSP.cities[self.city_index_by_order(self.size-1)]
             plt.plot([x1, x2], [y1, y2], color='k')
             plt.show(block=False)
             plt.pause(interval=0.001)

@@ -8,8 +8,12 @@ class TSPPartial(object):
     '''
     functional approach. all data is simple data structures.
     '''
+    
+    cities = {}
+    
     def __init__(self):
-        self.cities = {}
+        # self.cities = {}
+        pass
         
         
     def create_child(self, parent1, parent2):
@@ -52,8 +56,8 @@ class TSPPartial(object):
     def get_fitness(self, chromosome):
         dist = 0
         for i in range(len(chromosome)):
-            x1, y1 = self.cities[str(chromosome[i-1])]
-            x2, y2 = self.cities[str(chromosome[i])]
+            x1, y1 = TSPPartial.cities[str(chromosome[i-1])]
+            x2, y2 = TSPPartial.cities[str(chromosome[i])]
             dist += math.sqrt((x1 - x2) ** 2 + (y1- y2) ** 2)
         return dist
         
@@ -252,7 +256,7 @@ class TSPPartial(object):
         
     def merge(self, c1, c2):
         max_len = max(len(c1), len(c2))
-        if max_len > 0.9 * len(self.cities):
+        if max_len > 0.9 * len(TSPPartial.cities):
             if len(c2) > len(c1):
                 c1, c2 = c2, c1
                 
