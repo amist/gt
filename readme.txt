@@ -68,7 +68,8 @@ Run:
         
 --- How to animate a test run ---
 Each run creates a log in the logs folder, named according to the run's time.
-Concatenate all the log files for that run to one big log file.
+Due to a bug, each file contains also the information of the following runs.
+Therefore, take the first log of that run.
 In animate_log_multiple.py:
     Change log_file to the log file name.
 From Anaconda prompt, run:

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 cities_file = ''
 # log_file = 'logs/mult_1600.log'
 # log_file = 'logs/logfile_2017-10-03_22.19.55.491657.log'    # first YouTube example
-log_file = 'logs/logfile_2017-10-23_19.31.35.263855.log'
+log_file = 'logs/logfile_2017-10-24_19.43.45.930251.log'
 
 def get_cities(log_file):
     cities_file = ''
@@ -74,12 +74,21 @@ def get_rows(log_file):
                         prev_generation = generation
                         fitness = float(m.group(3))
                         # print('partial', generation, fitness)
-            elif line.startswith('['):
+            elif line.startswith('[['):
                 chromosomes = line
                 m = re.search(r'(\[.*\])', line)
                 if m:
                     chromosomes = json.loads(m.group(1))
                     chromosomes = [[str(x) for x in chromosome] for chromosome in chromosomes]
+            elif line.startswith('['):
+                chromosomes = line
+                m = re.search(r'(\[.*\])', line)
+                if m:
+                    try:
+                        chromosome = json.loads(m.group(1))
+                        chromosomes = [[str(x) for x in chromosome]]
+                    except json.decoder.JSONDecodeError:
+                        chromosomes = None    # entry in ini
                 # print(chromosome)
                 
             if generation is not None and fitness is not None and chromosomes is not None:
