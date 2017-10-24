@@ -1,3 +1,4 @@
+import sys
 import math
 import json
 
@@ -27,7 +28,8 @@ if __name__ == '__main__':
     # data_file = 'cities_qatar.json'
     # data_file = 'cities_wsahara.json'
     # data_file = 'cities280.json'
-    data_file = 'vlsi131.json'
+    # data_file = 'vlsi131.json'
+    data_file = sys.argv[1]
     # start_point = 60
     cities = get_cities(data_file)
     output = {}
