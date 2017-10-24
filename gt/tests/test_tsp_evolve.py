@@ -12,7 +12,7 @@ def run():
     
     config = configparser.ConfigParser()
     config.read(config_file)
-    start_point = '60'
+    start_point = '0'
     
     data_file = config.get('problem', 'data_file')
     with open(data_file, 'r') as f:
