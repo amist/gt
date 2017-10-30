@@ -12,7 +12,7 @@ class TSPEvolve(object):
         # self.config.read(config_file)
         self.config = config
         self.const_data = const_data
-        self.start_point = '0'
+        self.start_point = config.get('individual', 'evolution_start')
         
         if const_data is None:
             self.data_file = self.config.get('problem', 'data_file')

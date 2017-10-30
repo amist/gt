@@ -1,5 +1,7 @@
 import sys
 import time
+import random
+import re
 import configparser
 from gt.runner import Runner
 from gt.examples.tsp_evolve import *
@@ -12,11 +14,14 @@ def run():
     
     config = configparser.ConfigParser()
     config.read(config_file)
-    start_point = '0'
     
     data_file = config.get('problem', 'data_file')
     with open(data_file, 'r') as f:
         cities = json.loads(f.read())
+        
+    number_of_cities = len(cities)
+    start_point = str(random.randint(0, number_of_cities-1))
+    print('Starts from point', start_point)
         
     order_file = config.get('problem', 'order_file')
     with open(order_file, 'r') as f:
@@ -28,9 +33,15 @@ def run():
         'start_point': start_point,
     }
     
-    k = TSPEvolve(config=config, const_data=const_data)
+    k = TSPEvolve(config=config)
     # k.print()
-    runner = Runner(config_file=config_file)
+    
+    with open(config_file, 'r') as f:
+        config_string = f.read()
+        p = re.compile(r'evolution_start = (\d+)')
+        config_string = p.sub('evolution_start = {}'.format(start_point), config_string)
+        
+    runner = Runner(config_string=config_string)
     # plt.show()
     # exit()
     
