@@ -460,10 +460,11 @@ class MergerPopulation(BasePopulation):
         
         self.logger = logging.getLogger('result')
         self.logger.setLevel(logging.DEBUG)
-        fileh = logging.FileHandler('logs/logfile_{}.log'.format(str(datetime.datetime.now()).replace(' ', '_').replace(':', '.')))
-        formatter = logging.Formatter('%(message)s')
-        fileh.setFormatter(formatter)
-        self.logger.addHandler(fileh) 
+        # # don't add file handler. merger population assumes we're in the middle of a run with a live logger
+        # fileh = logging.FileHandler('logs/logfile_{}.log'.format(str(datetime.datetime.now()).replace(' ', '_').replace(':', '.')))
+        # formatter = logging.Formatter('%(message)s')
+        # fileh.setFormatter(formatter)
+        # self.logger.addHandler(fileh) 
         
         
     def initialize_process(self, config_string):

@@ -9,11 +9,12 @@ from gt.population import MergerPopulation
 # import cProfile
 
 # plt.ion()
-config = configparser.ConfigParser()
+config = None
 config_string = ''
+first_run = True
 
 def run_once(start_point):
-    global config, config_string
+    global config, config_string, first_run
     # config_file = os.path.join(os.getcwd(), 'tsp_partial_{}.config'.format(start_point))
     config_file = os.path.join(os.getcwd(), 'tsp_partial_template.config')
     with open(config_file, 'r') as f:
@@ -25,7 +26,8 @@ def run_once(start_point):
     config.read_string(config_string)
     
     # runner = Runner(config_file=config_file)
-    runner = Runner(config_string=config_string)
+    runner = Runner(config_string=config_string, new_logfile=first_run)
+    first_run = False
     # plt.show()
     # exit()
 
@@ -42,7 +44,7 @@ def run_once(start_point):
         
         
 def run():
-    global config, config_string
+    global config, config_string, first_run
     
     config_file = os.path.join(os.getcwd(), 'tsp_partial_template.config')
     with open(config_file, 'r') as f:
@@ -175,4 +177,7 @@ def print_solution(cities, chromosomes):
 
 if __name__ == '__main__':
     # cProfile.run('run()')
-    run()
+    for _ in range(20):
+        config = configparser.ConfigParser()
+        run()
+        first_run = True

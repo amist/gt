@@ -61,15 +61,12 @@ Configuration:
         (for example) order_file = gt/examples/aaorder_vlsi131.json
 Run:
     Edit gt/tests/test_tsp_partial.py:
-        When building solutions_collection, iterate according to the problem's size.
-        Iterate on missing starting points
+        In main(), edit the number of runs.
     Run:
         python -m gt.tests.test_tsp_partial
         
 --- How to animate a test run ---
 Each run creates a log in the logs folder, named according to the run's time.
-Due to a bug, each file contains also the information of the following runs.
-Therefore, take the first log of that run.
 In animate_log_multiple.py:
     Change log_file to the log file name.
 From Anaconda prompt, run:

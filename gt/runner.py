@@ -7,7 +7,7 @@ import logging
 import datetime
 
 class Runner(object):
-    def __init__(self, config_file=None, config_string=None):
+    def __init__(self, config_file=None, config_string=None, new_logfile=True):
         config = configparser.ConfigParser()
         if config_file is not None:
             config.read(config_file)
@@ -16,11 +16,15 @@ class Runner(object):
         
         self.logger = logging.getLogger('result')
         self.logger.setLevel(logging.DEBUG)
-        fileh = logging.FileHandler('logs/logfile_{}.log'.format(str(datetime.datetime.now()).replace(' ', '_').replace(':', '.')))
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        formatter = logging.Formatter('%(message)s')
-        fileh.setFormatter(formatter)
-        self.logger.addHandler(fileh) 
+        if new_logfile:
+            if len(self.logger.handlers) > 0:
+                self.logger.handlers[0].stream.close()
+                self.logger.removeHandler(self.logger.handlers[0])
+            fileh = logging.FileHandler('logs/logfile_{}.log'.format(str(datetime.datetime.now()).replace(' ', '_').replace(':', '.')))
+            # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            formatter = logging.Formatter('%(message)s')
+            fileh.setFormatter(formatter)
+            self.logger.addHandler(fileh) 
         
         for section in config.sections():
             self.logger.debug('[{}]'.format(section))
