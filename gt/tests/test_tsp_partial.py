@@ -61,7 +61,7 @@ def run():
     cities_number = max(map(int, cities.keys())) + 1
     sub_problem_size = config.getint('individual', 'size')
     # print(cities_number, sub_problem_size)
-    weights = [1] * cities_number       # each city needs to be at least once in sub-problems
+    weights = [3] * cities_number       # number of sub-problems each city has to be in
     starting_points = []
     while sum(weights) > 0:
         [start_point] = random.choices(range(cities_number), k=1, weights=weights)
@@ -72,8 +72,10 @@ def run():
         # print(order[start_point][:sub_problem_size])
         # print(cities_in_sub_problem)
         for city in cities_in_sub_problem:
-            weights[city] = 0
+            if weights[city] > 0:
+                weights[city] = weights[city] - 1
     # print(starting_points)
+    # print(len(starting_points))
     # return
     solutions_collection = []
     for i, start_point in enumerate(starting_points):
