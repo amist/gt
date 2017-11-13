@@ -5,7 +5,11 @@ import matplotlib.pyplot as plt
 
 cities_file = ''
 # log_file = 'logs/evolve_vlsi131_60_1.log'
-log_file = 'logs/logfile_2017-10-23_19.31.35.263855.log'
+log_files = [
+            'logs/1st_qatar/logfile_2017-10-31_18.40.55.903623.log',
+            'logs/1st_qatar/logfile_2017-10-31_22.07.24.402662.log',
+            'logs/1st_qatar/logfile_2017-11-01_01.31.46.367815.log',
+            ]
 
 def get_cities(log_file):
     cities_file = ''
@@ -102,4 +106,5 @@ def create_images(log_file):
     
     
 if __name__ == '__main__':
-    create_images(log_file)
+    for log_file in log_files:
+        create_images(log_file)
