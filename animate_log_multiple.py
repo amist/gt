@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 cities_file = ''
 # log_file = 'logs/mult_1600.log'
 # log_file = 'logs/logfile_2017-10-03_22.19.55.491657.log'    # first YouTube example
-log_file = 'logs/logfile_2017-10-24_19.43.45.930251.log'
+log_files = [
+            'logs/2nd_vlsi131/best.log',
+            ]
 
 def get_cities(log_file):
     cities_file = ''
@@ -26,7 +28,10 @@ def get_cities(log_file):
 
 def create_frame(cities, generation, fitness, chromosomes):
     plt.clf()
-    plt.suptitle('generation = {}, fitness = {:.2f}'.format(generation, fitness))
+    if generation != -1:
+        plt.suptitle('generation = {}, fitness = {:.2f}'.format(generation, fitness))
+    else:
+        plt.suptitle('')
     for city in cities:
         x, y = cities[city]
         plt.plot(x, y, '.', color='b')
@@ -82,18 +87,22 @@ def get_rows(log_file):
                     chromosomes = [[str(x) for x in chromosome] for chromosome in chromosomes]
             elif line.startswith('['):
                 chromosomes = line
-                m = re.search(r'(\[.*\])', line)
-                if m:
-                    try:
-                        chromosome = json.loads(m.group(1))
-                        chromosomes = [[str(x) for x in chromosome]]
-                    except json.decoder.JSONDecodeError:
-                        chromosomes = None    # entry in ini
-                # print(chromosome)
+                # m = re.search(r'(\[.*\])', line)
+                # if m:
+                try:
+                    chromosome = json.loads(line)
+                    chromosomes = [[str(x) for x in chromosome]]
+                except json.decoder.JSONDecodeError:
+                    chromosomes = None    # entry in ini
                 
-            if generation is not None and fitness is not None and chromosomes is not None:
+            # if generation is not None and fitness is not None and chromosomes is not None:
+            generation = generation or -1
+            fitness = fitness or -1
+            if chromosomes is not None:
                 rows.append((prefix, generation, fitness, chromosomes))
                 generation = fitness = chromosomes = None
+            # else:
+                # print(line)
                 
     return rows
                 
@@ -120,4 +129,5 @@ def create_images(log_file):
     
     
 if __name__ == '__main__':
-    create_images(log_file)
+    for log_file in log_files:
+        create_images(log_file)

@@ -69,7 +69,7 @@ Run:
 --- How to animate a test run ---
 Each run creates a log in the logs folder, named according to the run's time.
 In animate_log_multiple.py:
-    Change log_file to the log file name.
+    Change log_files list according to the logs you want to animate.
 From Anaconda prompt, run:
     python animate_log_multiple.py
 Running animate_log_multiple.py creates folder of images (an image for each generation) in log_animations folder. The name is the same as the original log file.

@@ -4,4 +4,5 @@ __pycache__/
 *.png
 *.pyc
 output.json
-log_animations/
+log_animations/*/*
+log_animations/*.mp4
